@@ -2,9 +2,7 @@
 
 `ipython-ngql`  is inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) created by [Catherine Devlin](https://catherinedevlin.blogspot.com/)
 
-![](https://github.com/wey-gu/ipython-ngql/blob/master/examples/get_started.png)
-
-
+![get_started](https://github.com/wey-gu/ipython-ngql/blob/main/examples/get_started.png?raw=true)
 
 ## Get Started
 
@@ -218,7 +216,7 @@ In [7]: %ngql help
 
 #### Jupyter Notebook
 
-Please refer here:https://github.com/wey-gu/ipython-ngql/blob/master/examples/get_started.ipynb
+Please refer here:https://github.com/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb
 
 #### iPython
 
