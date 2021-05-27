@@ -1,3 +1,11 @@
+> Note, this is an pre-release version. Becuase the tabular return resut is not yet fully supported in some queries.
+>
+> Still you can use it with `%config IPythonNGQL.ngql_result_style="raw"`, after which line being executed, the result will be raw ResultSet.
+>
+> If you like to use it, please let me know, I may put more time into this project to make the tabular work.
+
+
+
 `ipython-ngql` is a python package to extend the ability to connect Nebula Graph from your Jupyter Notebook or iPython. It's easier for data scientists to create, debug and share reusable and all-in-one Jupyter Notebooks with Nebula Graph interaction embedded.
 
 `ipython-ngql`  is inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) created by [Catherine Devlin](https://catherinedevlin.blogspot.com/)
