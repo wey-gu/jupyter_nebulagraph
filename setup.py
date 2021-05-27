@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ipython-ngql",
-    version="0.3",
+    version="2.0.0",
     author="Wey Gu",
     author_email="weyl.gu@gmail.com",
     description="iPython and Jupyter Plugin for Nebula Graph",
@@ -24,7 +24,7 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         'Jinja2',
-        'nebula2-python',
+        'nebula2-python==2.0.0',
         'pandas',
     ],
 )
