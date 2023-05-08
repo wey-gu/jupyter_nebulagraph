@@ -23,11 +23,6 @@ CONNECTION_POOL_CREATED = 1  # self.connection_pool newly created/recreated
 STYLE_PANDAS = "pandas"
 STYLE_RAW = "raw"
 
-# FIXME:(wey-gu) add other type mappings
-TYPE_MAPPING = {
-    "string": str,
-}
-
 
 @magics_class
 class IPythonNGQL(Magics, Configurable):
@@ -279,16 +274,18 @@ class IPythonNGQL(Magics, Configurable):
         if variable_name not in local_ns:
             return "No result found, please execute a query first."
         result_df = local_ns[variable_name]
-        assert isinstance(result_df, pd.DataFrame), "Result is not in Pandas DataFrame Style"
+        assert isinstance(
+            result_df, pd.DataFrame
+        ), "Result is not in Pandas DataFrame Style"
 
         # Create a graph
         g = Network(
-            notebook = True,
-            directed = True,
-            cdn_resources = 'in_line',
-            height = "500px",
-            width = "100%",
-            )
+            notebook=True,
+            directed=True,
+            cdn_resources="in_line",
+            height="500px",
+            width="100%",
+        )
         for _, row in result_df.iterrows():
             for item in row:
                 self.render_pd_item(g, item)
@@ -303,11 +300,10 @@ class IPythonNGQL(Magics, Configurable):
 
         return g.show("nebulagraph_draw.html", notebook=True)
 
-
     def render_pd_item(self, g, item):
         if isinstance(item, Node):
             node_id = item.get_id().cast()
-            tags = item.tags() # list of strings
+            tags = item.tags()  # list of strings
             props = dict()
             for tag in tags:
                 props.update(item.properties(tag))
