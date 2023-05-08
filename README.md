@@ -1,8 +1,7 @@
-`ipython-ngql` is a Python package to extend the ability to connect NebulaGraph from your Jupyter Notebook or iPython. It's easier for data scientists to create, debug and share reusable and all-in-one Jupyter Notebooks with Nebula Graph interaction embedded.
 
-`ipython-ngql`  is inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) created by [Catherine Devlin](https://catherinedevlin.blogspot.com/)
+`ipython-ngql` is a Python package that enhances your ability to connect to NebulaGraph from your Jupyter Notebook or iPython. It simplifies the process for data scientists to create, debug, and share all-in-one Jupyter Notebooks with NebulaGraph interaction embedded to facilitate easier collaboration.
 
-
+`ipython-ngql` draws inspiration from [ipython-sql](https://github.com/catherinedevlin/ipython-sql), created by [Catherine Devlin](https://catherinedevlin.blogspot.com/)
 
 ![](https://user-images.githubusercontent.com/1651790/236798634-8ccb3b5c-8a4f-4834-b602-10eeb2678bc8.png)
 
@@ -36,14 +35,14 @@ python setup.py install
 %load_ext ngql
 ```
 
-### Connect to Nebula Graph
+### Connect to NebulaGraph
 
-Arguments as below are needed to connect a Nebula Graph DB instance:
+Arguments as below are needed to connect a NebulaGraph DB instance:
 
 | Argument               | Description                              |
 | ---------------------- | ---------------------------------------- |
-| `--address` or `-addr` | IP address of the Nebula Graph Instance  |
-| `--port` or `-P`       | Port number of the Nebula Graph Instance |
+| `--address` or `-addr` | IP address of the NebulaGraph Instance   |
+| `--port` or `-P`       | Port number of the NebulaGraph Instance  |
 | `--user` or `-u`       | User name                                |
 | `--password` or `-p`   | Password                                 |
 
@@ -195,7 +194,7 @@ In [7]: %ngql help
 
         Supported Configurations:
         ------------------------
-
+        
         > How to config ngql_result_style in "raw", "pandas"
         %config IPythonNGQL.ngql_result_style="raw"
         %config IPythonNGQL.ngql_result_style="pandas"
@@ -213,7 +212,7 @@ In [7]: %ngql help
         %ngql --address 127.0.0.1 --port 9669 --user user --password password
 
         > Use Space
-        %ngql USE nba
+        %ngql USE basketballplayer
 
         > Query
         %ngql SHOW TAGS;
@@ -229,6 +228,12 @@ In [7]: %ngql help
         > Variables in query, we are using Jinja2 here
         name = "nba"
         %ngql USE "{{ name }}"
+
+        > Query and draw the graph
+
+        %ngql GET SUBGRAPH 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
+
+        %ng_draw
 ```
 
 

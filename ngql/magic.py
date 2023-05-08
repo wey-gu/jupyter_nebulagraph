@@ -232,7 +232,7 @@ class IPythonNGQL(Magics, Configurable):
         %ngql --address 127.0.0.1 --port 9669 --user user --password password
 
         > Use Space
-        %ngql USE nba
+        %ngql USE basketballplayer
 
         > Query
         %ngql SHOW TAGS;
