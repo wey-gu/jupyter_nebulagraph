@@ -1,16 +1,14 @@
-> Note, this is an pre-release version. Becuase the tabular return resut is not yet fully supported in some queries.
->
-> Still you can use it with `%config IPythonNGQL.ngql_result_style="raw"`, after which line being executed, the result will be raw ResultSet.
->
-> If you like to use it, please let me know, I may put more time into this project to make the tabular work.
-
-
-
-`ipython-ngql` is a python package to extend the ability to connect Nebula Graph from your Jupyter Notebook or iPython. It's easier for data scientists to create, debug and share reusable and all-in-one Jupyter Notebooks with Nebula Graph interaction embedded.
+`ipython-ngql` is a Python package to extend the ability to connect NebulaGraph from your Jupyter Notebook or iPython. It's easier for data scientists to create, debug and share reusable and all-in-one Jupyter Notebooks with Nebula Graph interaction embedded.
 
 `ipython-ngql`  is inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) created by [Catherine Devlin](https://catherinedevlin.blogspot.com/)
 
-![get_started](https://github.com/wey-gu/ipython-ngql/blob/main/examples/get_started.png?raw=true)
+
+
+![](https://user-images.githubusercontent.com/1651790/236798634-8ccb3b5c-8a4f-4834-b602-10eeb2678bc8.png)
+
+![](https://user-images.githubusercontent.com/1651790/236798238-49dd59c9-0827-4a86-b714-fb195e6be4b9.png)
+
+
 
 ## Get Started
 
@@ -62,14 +60,14 @@ Now two kind of iPtython Magics are supported:
 Option 1: The one line stype with `%ngql`:
 
 ```python
-%ngql GO FROM "Tom" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id;
+%ngql USE basketballplayer;
+%ngql MATCH (v:player{name:"Tim Duncan"})-->(v2:player) RETURN v2.player.name AS Name;
 ```
 
 Option 2: The multiple lines stype with `%%ngql `
 
 ```python
 %%ngql
-USE pokemon_club;
 SHOW TAGS;
 SHOW HOSTS;
 ```
@@ -83,23 +81,38 @@ SHOW HOSTS;
 The actual query string should be `GO FROM "Sue" OVER owns_pokemon ...`, and `"{{ trainer }}"` was renderred as `"Sue"` by consuming the local variable `trainer`:
 
 ```python
-In [8]: trainer = "Sue"
+In [8]: vid = "player100"
 
 In [9]: %%ngql
-   ...: GO FROM "{{ trainer }}" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
-   ...:
-
-Out[9]:
-  Trainer_Name
-0        Jerry
-1          Sue
-2          Tom
-3          Wey
+   ...: MATCH (v)<-[e:follow]- (v2)-[e2:serve]->(v3)
+   ...:   WHERE id(v) == "{{ vid }}"
+   ...: RETURN v2.player.name AS FriendOf, v3.team.name AS Team LIMIT 3;
+Out[9]:   RETURN v2.player.name AS FriendOf, v3.team.name AS Team LIMIT 3;
+FriendOf	Team
+0	LaMarcus Aldridge	Trail Blazers
+1	LaMarcus Aldridge	Spurs
+2	Marco Belinelli	Warriors
 ```
+
+### Draw query results
+
+Just call `%ng_draw` after queries with graph data.
+
+```python
+# one query
+%ngql GET SUBGRAPH 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
+%ng_draw
+
+# another query
+%ngql match p=(:player)-[]->() return p LIMIT 5
+%ng_draw
+```
+
+![](https://user-images.githubusercontent.com/1651790/236797874-c142cfd8-b0de-4689-95ef-1da386e137d3.png)
 
 ### Configure `ngql_result_style`
 
-By default, `ipython-ngql` will use pandas dataframe as output style to enable more human readable output, while it's supported to use the raw thrift data format comes from the `nebula2-python` itself.
+By default, `ipython-ngql` will use pandas dataframe as output style to enable more human-readable output, while it's supported to use the raw thrift data format that comes from the `nebula3-python` itself.
 
 This can be done ad-hoc with below one line:
 
@@ -107,7 +120,7 @@ This can be done ad-hoc with below one line:
 %config IPythonNGQL.ngql_result_style="raw"
 ```
 
-After above line being executed, the output will be like:
+After the above line is executed, the output will be like this:
 
 ```python
 ResultSet(ExecutionResponse(
@@ -229,135 +242,22 @@ Please refer here:https://github.com/wey-gu/ipython-ngql/blob/main/examples/get_
 #### iPython
 
 ```python
-venv ❯ ipython
-
 In [1]: %load_ext ngql
 
-In [2]: %ngql --address 127.0.0.1 --port 9669 --user user --password password
+In [2]: %ngql --address 192.168.8.128 --port 9669 --user root --password nebula
 Connection Pool Created
-Out[2]:
-           Name
-0  pokemon_club
+Out[2]: 
+                        Name
+0           basketballplayer
+1  demo_movie_recommendation
+2                        k8s
+3                       test
 
-In [3]: %ngql GO FROM "Tom" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name
-Out[3]:
-  Trainer_Name
-0          Tom
-1        Jerry
-2          Sue
-3          Tom
-4          Wey
-
-In [4]: %%ngql
-   ...: SHOW TAGS;
-   ...: SHOW HOSTS;
-   ...:
-   ...:
-Out[4]:
-        Host    Port  Status  Leader count Leader distribution Partition distribution
-0  storaged0  9779.0  ONLINE             0  No valid partition     No valid partition
-1  storaged1  9779.0  ONLINE             1      pokemon_club:1         pokemon_club:1
-2  storaged2  9779.0  ONLINE             0  No valid partition     No valid partition
-3      Total     NaN    None             1      pokemon_club:1         pokemon_club:1
-
-In [5]: trainer = "Sue"
-
-In [6]: %%ngql
-   ...: GO FROM "{{ trainer }}" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
-   ...:
-Out[6]:
-  Trainer_Name
-0        Jerry
-1          Sue
-2          Tom
-3          Wey
-
-In [7]: %ngql help
-
-
-        Supported Configurations:
-        ------------------------
-
-        > How to config ngql_result_style in "raw", "pandas"
-        %config IPythonNGQL.ngql_result_style="raw"
-        %config IPythonNGQL.ngql_result_style="pandas"
-
-        > How to config ngql_verbose in True, False
-        %config IPythonNGQL.ngql_verbose=True
-
-        > How to config max_connection_pool_size
-        %config IPythonNGQL.max_connection_pool_size=10
-
-        Quick Start:
-        -----------
-
-        > Connect to Neubla Graph
-        %ngql --address 127.0.0.1 --port 9669 --user user --password password
-
-        > Use Space
-        %ngql USE nba
-
-        > Query
-        %ngql SHOW TAGS;
-
-        > Multile Queries
-        %%ngql
-        SHOW TAGS;
-        SHOW HOSTS;
-
-        Reload ngql Magic
-        %reload_ext ngql
-
-        > Variables in query, we are using Jinja2 here
-        name = "nba"
-        %ngql USE "{{ name }}"
-
-In [8]: trainer = "Sue"
-
-In [9]: %%ngql
-   ...: GO FROM "{{ trainer }}" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
-   ...:
-   ...:
-Out[9]:
-  Trainer_Name
-0        Jerry
-1          Sue
-2          Tom
-3          Wey
-
-In [10]: %config IPythonNGQL.ngql_result_style="raw"
-
-In [11]: %%ngql USE pokemon_club;
-    ...: GO FROM "Tom" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id
-    ...: | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
-    ...:
-    ...:
-Out[11]:
-ResultSet(ExecutionResponse(
-    error_code=0,
-    latency_in_us=3270,
-    data=DataSet(
-        column_names=[b'Trainer_Name'],
-        rows=[Row(
-            values=[Value(
-                sVal=b'Tom')]),
-        Row(
-            values=[Value(
-                sVal=b'Jerry')]),
-        Row(
-            values=[Value(
-                sVal=b'Sue')]),
-        Row(
-            values=[Value(
-                sVal=b'Tom')]),
-        Row(
-            values=[Value(
-                sVal=b'Wey')])]),
-    space_name=b'pokemon_club'))
-
-In [12]: r = _
-
-In [13]: r.column_values(key='Trainer_Name')[0]._value.value
-Out[13]: b'Tom'
+In [3]: %ngql USE basketballplayer;
+   ...: %ngql MATCH (v:player{name:"Tim Duncan"})-->(v2:player) RETURN v2.player.name AS Name;
+Out[3]: 
+            Name
+0    Tony Parker
+1  Manu Ginobili
 ```
 
