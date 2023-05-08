@@ -8,7 +8,6 @@
 ![](https://user-images.githubusercontent.com/1651790/236798238-49dd59c9-0827-4a86-b714-fb195e6be4b9.png)
 
 
-
 ## Get Started
 
 ### Installation
@@ -130,15 +129,7 @@ ResultSet(ExecutionResponse(
         rows=[Row(
             values=[Value(
                 sVal=b'Tom')]),
-        Row(
-            values=[Value(
-                sVal=b'Jerry')]),
-        Row(
-            values=[Value(
-                sVal=b'Sue')]),
-        Row(
-            values=[Value(
-                sVal=b'Tom')]),
+...
         Row(
             values=[Value(
                 sVal=b'Wey')])]),
@@ -148,14 +139,14 @@ ResultSet(ExecutionResponse(
 The result are always stored in variable `_` in Jupyter Notebook, thus, to tweak the result, just refer a new var to it like:
 
 ```python
-In [10]: %config IPythonNGQL.ngql_result_style="raw"
+In [1] : %config IPythonNGQL.ngql_result_style="raw"
 
-In [11]: %%ngql USE pokemon_club;
+In [2] : %%ngql USE pokemon_club;
     ...: GO FROM "Tom" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id
     ...: | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
     ...:
     ...:
-Out[11]:
+Out[3]:
 ResultSet(ExecutionResponse(
     error_code=0,
     latency_in_us=3270,
@@ -164,24 +155,16 @@ ResultSet(ExecutionResponse(
         rows=[Row(
             values=[Value(
                 sVal=b'Tom')]),
-        Row(
-            values=[Value(
-                sVal=b'Jerry')]),
-        Row(
-            values=[Value(
-                sVal=b'Sue')]),
-        Row(
-            values=[Value(
-                sVal=b'Tom')]),
+...
         Row(
             values=[Value(
                 sVal=b'Wey')])]),
     space_name=b'pokemon_club'))
 
-In [12]: r = _
+In [4]: r = _
 
-In [13]: r.column_values(key='Trainer_Name')[0]._value.value
-Out[13]: b'Tom'
+In [5]: r.column_values(key='Trainer_Name')[0].cast()
+Out[5]: 'Tom'
 ```
 
 ### Get Help
@@ -189,54 +172,9 @@ Out[13]: b'Tom'
 Don't remember anything or even relying on the cheatsheet here, oen takeaway for you: the help!
 
 ```python
-In [7]: %ngql help
+In [1]: %ngql help
 
-
-        Supported Configurations:
-        ------------------------
-        
-        > How to config ngql_result_style in "raw", "pandas"
-        %config IPythonNGQL.ngql_result_style="raw"
-        %config IPythonNGQL.ngql_result_style="pandas"
-
-        > How to config ngql_verbose in True, False
-        %config IPythonNGQL.ngql_verbose=True
-
-        > How to config max_connection_pool_size
-        %config IPythonNGQL.max_connection_pool_size=10
-
-        Quick Start:
-        -----------
-
-        > Connect to Neubla Graph
-        %ngql --address 127.0.0.1 --port 9669 --user user --password password
-
-        > Use Space
-        %ngql USE basketballplayer
-
-        > Query
-        %ngql SHOW TAGS;
-
-        > Multile Queries
-        %%ngql
-        SHOW TAGS;
-        SHOW HOSTS;
-
-        Reload ngql Magic
-        %reload_ext ngql
-
-        > Variables in query, we are using Jinja2 here
-        name = "nba"
-        %ngql USE "{{ name }}"
-
-        > Query and draw the graph
-
-        %ngql GET SUBGRAPH 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
-
-        %ng_draw
 ```
-
-
 
 ### Examples
 
