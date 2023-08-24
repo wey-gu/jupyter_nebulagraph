@@ -23,6 +23,14 @@ CONNECTION_POOL_CREATED = 1  # self.connection_pool newly created/recreated
 STYLE_PANDAS = "pandas"
 STYLE_RAW = "raw"
 
+COLORS = [
+    "#331832",
+    "#d81e5b",
+    "#f0544f",
+    "#C6D8D3",
+    "#FDF0D5",
+]
+
 
 @magics_class
 class IPythonNGQL(Magics, Configurable):
@@ -315,7 +323,16 @@ class IPythonNGQL(Magics, Configurable):
             props = dict()
             for tag in tags:
                 props.update(item.properties(tag))
-            g.add_node(node_id, label=node_id, title=str(props))
+
+            def node_id_hash(input_str):
+                hash_val = 0
+                for char in input_str:
+                    hash_val = (hash_val * 31 + ord(char)) & 0xFFFFFFFF
+                return hash_val
+
+            color = COLORS[node_id_hash(node_id) % len(COLORS)]
+
+            g.add_node(node_id, label=node_id, title=str(props), color=color)
         elif isinstance(item, Relationship):
             src_id = item.start_vertex_id().cast()
             dst_id = item.end_vertex_id().cast()
