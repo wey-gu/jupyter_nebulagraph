@@ -7,7 +7,7 @@ from nebula3.data.DataObject import Node, Relationship, PathWrapper
 from pyvis.network import Network
 from IPython.display import display, IFrame, HTML
 
-COLORS = ["#e2dbbe","#d5d6aa","#9dbbae","#769fb6","#188fa7"]
+COLORS = ["#e2dbbe", "#d5d6aa", "#9dbbae", "#769fb6", "#188fa7"]
 
 
 def get_color(input_str):
@@ -15,6 +15,7 @@ def get_color(input_str):
     for char in input_str:
         hash_val = (hash_val * 31 + ord(char)) & 0xFFFFFFFF
     return COLORS[hash_val % len(COLORS)]
+
 
 def render_pd_item(g, item):
     if isinstance(item, Node):
@@ -24,9 +25,7 @@ def render_pd_item(g, item):
         for tag in tags:
             props.update(item.properties(tag))
 
-        g.add_node(
-            node_id, label=node_id, title=str(props), color=get_color(node_id)
-        )
+        g.add_node(node_id, label=node_id, title=str(props), color=get_color(node_id))
     elif isinstance(item, Relationship):
         src_id = item.start_vertex_id().cast()
         dst_id = item.end_vertex_id().cast()
@@ -42,12 +41,13 @@ def render_pd_item(g, item):
             )
         if not dst_id in g.node_ids:
             g.add_node(
-                    dst_id,
-                    label=str(dst_id),
-                    title=str(dst_id),
-                    color=get_color(dst_id),
+                dst_id,
+                label=str(dst_id),
+                title=str(dst_id),
+                color=get_color(dst_id),
             )
-        g.add_edge(src_id, dst_id, label=edge_name, title=str(props))
+        label = f"{props}\n{edge_name}" if props else edge_name
+        g.add_edge(src_id, dst_id, label=label, title=str(props))
     elif isinstance(item, PathWrapper):
         for node in item.nodes():
             render_pd_item(g, node)

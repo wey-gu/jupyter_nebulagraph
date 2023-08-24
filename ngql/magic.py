@@ -361,7 +361,8 @@ class IPythonNGQL(Magics, Configurable):
                     title=str(dst_id),
                     color=get_color(dst_id),
                 )
-            g.add_edge(src_id, dst_id, label=edge_name, title=str(props))
+            label = f"{props}\n{edge_name}" if props else edge_name
+            g.add_edge(src_id, dst_id, label=label, title=str(props))
         elif isinstance(item, PathWrapper):
             for node in item.nodes():
                 self.render_pd_item(g, node)
