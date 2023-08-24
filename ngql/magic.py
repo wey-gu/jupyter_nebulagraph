@@ -266,6 +266,8 @@ class IPythonNGQL(Magics, Configurable):
         try:
             import pandas as pd
             from pyvis.network import Network
+            from IPython.core.display import display, HTML
+
         except ImportError:
             raise ImportError("Please install pyvis to draw the graph")
         # when `%ngql foo`, varible_name is "foo", else it's "_"
@@ -297,8 +299,9 @@ class IPythonNGQL(Magics, Configurable):
             damping=0.09,
         )
         # g.show_buttons(filter_='physics')
-
-        return g.show("nebulagraph_draw.html", notebook=True)
+        # return g.show("nebulagraph_draw.html", notebook=True)
+        g_html_string = g.generate_html("nebulagraph.html")
+        display(HTML(g_html_string))
 
     def render_pd_item(self, g, item):
         if isinstance(item, Node):
