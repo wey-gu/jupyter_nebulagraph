@@ -303,6 +303,11 @@ class IPythonNGQL(Magics, Configurable):
         g_html_string = g.generate_html("nebulagraph.html")
         display(HTML(g_html_string))
 
+        with open("nebulagraph.html", "w") as f:
+            f.write(g_html_string)
+
+        return g
+
     def render_pd_item(self, g, item):
         if isinstance(item, Node):
             node_id = item.get_id().cast()
