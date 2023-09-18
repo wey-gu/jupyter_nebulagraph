@@ -2,7 +2,6 @@ import logging
 
 from IPython.core.magic import Magics, magics_class, line_cell_magic, needs_local_scope
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
-from IPython.display import display, HTML
 
 from typing import Dict
 
@@ -168,10 +167,10 @@ class IPythonNGQL(Magics, Configurable):
     def _auto_use_space(self, result=None):
         if result is None:
             session = self._get_session()
-            result = session.execute("SHOW SPACES YIELD Name AS Space_Name;")
+            result = session.execute("SHOW SPACES;")
 
         if result.row_size() == 1:
-            self.space = self._decode_value(result.row_values(0)[0]._value.value)
+            self.space = result.row_values(0)[0].cast()
 
     def _execute(self, query):
         session = self._get_session()
@@ -313,7 +312,7 @@ class IPythonNGQL(Magics, Configurable):
         # g.show_buttons(filter_='physics')
         # return g.show("nebulagraph_draw.html", notebook=True)
         g_html_string = g.generate_html("nebulagraph.html")
-        with open("nebulagraph.html", "w", encoding='utf-8') as f:
+        with open("nebulagraph.html", "w", encoding="utf-8") as f:
             f.write(g_html_string)
         # detect if we are in colab or not
         try:
