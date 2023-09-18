@@ -22,7 +22,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            vesoft/nebula-console
+            weygu/nebulagraph-jupyter
           tags: |
             # git tag & latest coverred
             type=ref,event=tag
