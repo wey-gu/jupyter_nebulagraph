@@ -24,6 +24,8 @@ STYLE_RAW = "raw"
 
 COLORS = ["#E2DBBE", "#D5D6AA", "#9DBBAE", "#769FB6", "#188FA7"]
 
+ESCAPE_ARROW_STRING = "__ar_row__"
+
 
 def get_color(input_str):
     hash_val = 0
@@ -76,7 +78,10 @@ class IPythonNGQL(Magics, Configurable):
 
         cell = self._render_cell_vars(cell, local_ns)
 
-        args = parse_argstring(self.ngql, line)
+        # Replace "->" with ESCAPE_ARROW_STRING to avoid argument parsing issues
+        modified_line = line.replace("->", ESCAPE_ARROW_STRING)
+
+        args = parse_argstring(self.ngql, modified_line)
 
         connection_state = self._init_connection_pool(args)
         if self.ngql_verbose:
@@ -92,7 +97,10 @@ class IPythonNGQL(Magics, Configurable):
                 # When connection info in first line and with nGQL lines followed
                 return self._stylized(self._execute(cell))
         if connection_state == CONNECTION_POOL_EXISTED:
-            query = line + "\n" + (cell if cell else "")
+            # Restore "->" in the query before executing it
+            query = (
+                line.replace(ESCAPE_ARROW_STRING, "->") + "\n" + (cell if cell else "")
+            )
             return self._stylized(self._execute(query))
         else:  # We shouldn't reach here
             return f"Nothing triggerred, Connection State: { connection_state }"
