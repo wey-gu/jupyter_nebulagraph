@@ -313,7 +313,7 @@ class IPythonNGQL(Magics, Configurable):
         # g.show_buttons(filter_='physics')
         # return g.show("nebulagraph_draw.html", notebook=True)
         g_html_string = g.generate_html("nebulagraph.html")
-        with open("nebulagraph.html", "w") as f:
+        with open("nebulagraph.html", "w", encoding='utf-8') as f:
             f.write(g_html_string)
         # detect if we are in colab or not
         try:
