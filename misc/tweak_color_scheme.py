@@ -78,7 +78,7 @@ g.repulsion(
 
 g_html_string = g.generate_html("nebulagraph.html")
 
-with open("nebulagraph.html", "w", encoding='utf-8') as f:
+with open("nebulagraph.html", "w", encoding="utf-8") as f:
     f.write(g_html_string)
 
 display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
