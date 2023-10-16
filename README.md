@@ -1,6 +1,8 @@
 
 [![for NebulaGraph](https://img.shields.io/badge/Toolchain-NebulaGraph-blue)](https://github.com/vesoft-inc/nebula) [![Jupyter](https://img.shields.io/badge/Jupyter-Supported-brightgreen)](https://github.com/jupyterlab/jupyterlab) [![Docker Image](https://img.shields.io/docker/v/weygu/nebulagraph-jupyter?label=Image&logo=docker)](https://hub.docker.com/r/weygu/nebulagraph-jupyter) [![Docker Extension](https://img.shields.io/badge/Docker-Extension-blue?logo=docker)](https://hub.docker.com/extensions/weygu/nebulagraph-dd-ext) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wey-gu/ipython-ngql?label=Version)](https://github.com/wey-gu/ipython-ngql/releases)
 
+https://github.com/wey-gu/ipython-ngql/assets/1651790/10135264-77b5-4d3c-b68f-c5810257feeb
+
 `ipython-ngql` is a Python package for connecting to NebulaGraph in Jupyter Notebook or iPython. It simplifies creating, debugging, and sharing Jupyter Notebooks with NebulaGraph interactions for better collaboration.
 
 Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Catherine Devlin](https://catherinedevlin.blogspot.com/).
