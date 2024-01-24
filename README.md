@@ -1,6 +1,7 @@
 
 [![for NebulaGraph](https://img.shields.io/badge/Toolchain-NebulaGraph-blue)](https://github.com/vesoft-inc/nebula) [![Jupyter](https://img.shields.io/badge/Jupyter-Supported-brightgreen)](https://github.com/jupyterlab/jupyterlab) [![Docker Image](https://img.shields.io/docker/v/weygu/nebulagraph-jupyter?label=Image&logo=docker)](https://hub.docker.com/r/weygu/nebulagraph-jupyter) [![Docker Extension](https://img.shields.io/badge/Docker-Extension-blue?logo=docker)](https://hub.docker.com/extensions/weygu/nebulagraph-dd-ext) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wey-gu/ipython-ngql?label=Version)](https://github.com/wey-gu/ipython-ngql/releases)
 [![pypi-version](https://img.shields.io/pypi/v/ipython-ngql)](https://pypi.org/project/ipython-ngql/)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb)
 
 
 https://github.com/wey-gu/ipython-ngql/assets/1651790/10135264-77b5-4d3c-b68f-c5810257feeb
@@ -16,6 +17,8 @@ Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Ca
 
 
 ## Get Started
+
+Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb).
 
 ### Installation
 
@@ -113,7 +116,7 @@ Just call `%ng_draw` after queries with graph data.
 %ng_draw
 ```
 
-![](https://user-images.githubusercontent.com/1651790/236797874-c142cfd8-b0de-4689-95ef-1da386e137d3.png)
+![](https://github.com/wey-gu/ipython-ngql/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
 
 ### Configure `ngql_result_style`
 

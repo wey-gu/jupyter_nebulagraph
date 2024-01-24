@@ -1,9 +1,16 @@
 import logging
 
-from IPython.core.magic import Magics, magics_class, line_cell_magic, needs_local_scope
+from IPython.core.magic import (
+    Magics,
+    magics_class,
+    line_cell_magic,
+    needs_local_scope,
+)
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 
-from typing import Dict
+from typing import Dict, List
+import networkx as nx
+
 
 from jinja2 import Template, Environment, meta
 from traitlets.config.configurable import Configurable
@@ -22,9 +29,28 @@ CONNECTION_POOL_CREATED = 1  # self.connection_pool newly created/recreated
 STYLE_PANDAS = "pandas"
 STYLE_RAW = "raw"
 
-COLORS = ["#E2DBBE", "#D5D6AA", "#9DBBAE", "#769FB6", "#188FA7"]
+# COLORS = ["#E2DBBE", "#D5D6AA", "#9DBBAE", "#769FB6", "#188FA7"]
+# solarized dark
+COLORS = [
+    "#93A1A1",
+    "#B58900",
+    "#CB4B16",
+    "#DC322F",
+    "#D33682",
+    "#6C71C4",
+    "#268BD2",
+    "#2AA198",
+    "#859900",
+]
 
 ESCAPE_ARROW_STRING = "__ar_row__"
+
+
+def truncate(string: str, length: int = 10) -> str:
+    if len(string) > length:
+        return string[:length] + ".."
+    else:
+        return string
 
 
 def get_color(input_str):
@@ -99,7 +125,9 @@ class IPythonNGQL(Magics, Configurable):
         if connection_state == CONNECTION_POOL_EXISTED:
             # Restore "->" in the query before executing it
             query = (
-                line.replace(ESCAPE_ARROW_STRING, "->") + "\n" + (cell if cell else "")
+                line.replace(ESCAPE_ARROW_STRING, "->")
+                + "\n"
+                + (cell if cell else "")
             )
             return self._stylized(self._execute(query))
         else:  # We shouldn't reach here
@@ -306,12 +334,17 @@ class IPythonNGQL(Magics, Configurable):
             cdn_resources="in_line",
             height="500px",
             width="100%",
+            bgcolor="#002B36",
+            font_color="#93A1A1",
+            neighborhood_highlight=True,
         )
+        g_nx = nx.MultiDiGraph()
         for _, row in result_df.iterrows():
             for item in row:
-                self.render_pd_item(g, item)
+                self.render_pd_item(g, g_nx, item)
+
         g.repulsion(
-            node_distance=100,
+            node_distance=90,
             central_gravity=0.2,
             spring_length=200,
             spring_strength=0.05,
@@ -327,32 +360,64 @@ class IPythonNGQL(Magics, Configurable):
             if "google.colab" in str(get_ipython()):
                 display(HTML(g_html_string))
             else:
-                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
+                display(
+                    IFrame(src="nebulagraph.html", width="100%", height="500px")
+                )
         except Exception as e:
             print(f"[WARN]: failed to display the graph\n { e }")
             try:
-                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
+                display(
+                    IFrame(src="nebulagraph.html", width="100%", height="500px")
+                )
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
 
         return g
 
-    def render_pd_item(self, g, item):
+    def render_pd_item(self, g, g_nx, item):
+        # g is pyvis graph
+        # g_nx is networkx graph
+
         if isinstance(item, Node):
-            node_id = item.get_id().cast()
+            node_id = str(item.get_id().cast())
             tags = item.tags()  # list of strings
-            props = dict()
+            props_raw = dict()
             for tag in tags:
-                props.update(item.properties(tag))
+                props_raw.update(item.properties(tag))
+            props = {
+                k: str(v.cast()) if hasattr(v, "cast") else str(v)
+                for k, v in props_raw.items()
+            }
+
+            if "name" in props:
+                label = props["name"]
+            else:
+                label = f"tag: {tags}, id: {node_id}"
+                for k in props:
+                    if "name" in str(k).lower():
+                        label = props[k]
+                        break
+            if "id" not in props:
+                props["id"] = node_id
 
             g.add_node(
-                node_id, label=node_id, title=str(props), color=get_color(node_id)
+                node_id, label=label, title=str(props), color=get_color(node_id)
             )
+
+            # networkx
+            if len(tags) > 1:
+                g_nx.add_node(node_id, type=tags[0], **props)
+            else:
+                g_nx.add_node(node_id, **props)
         elif isinstance(item, Relationship):
-            src_id = item.start_vertex_id().cast()
-            dst_id = item.end_vertex_id().cast()
+            src_id = str(item.start_vertex_id().cast())
+            dst_id = str(item.end_vertex_id().cast())
             edge_name = item.edge_name()
-            props = item.properties()
+            props_raw = item.properties()
+            props = {
+                k: str(v.cast()) if hasattr(v, "cast") else str(v)
+                for k, v in props_raw.items()
+            }
             # ensure start and end vertex exist in graph
             if not src_id in g.node_ids:
                 g.add_node(
@@ -368,13 +433,27 @@ class IPythonNGQL(Magics, Configurable):
                     title=str(dst_id),
                     color=get_color(dst_id),
                 )
-            label = f"{props}\n{edge_name}" if props else edge_name
+            props_str_list: List[str] = []
+            for k in props:
+                if len(props_str_list) >= 1:
+                    break
+                props_str_list.append(
+                    f"{truncate(k, 7)}: {truncate(str(props[k]), 8)}"
+                )
+            props_str = "\n".join(props_str_list)
+
+            label = f"{props_str}\n{edge_name}" if props else edge_name
             g.add_edge(src_id, dst_id, label=label, title=str(props))
+            # networkx
+            props["edge_type"] = edge_name
+            g_nx.add_edge(src_id, dst_id, **props)
+
         elif isinstance(item, PathWrapper):
             for node in item.nodes():
-                self.render_pd_item(g, node)
+                self.render_pd_item(g, g_nx, node)
             for edge in item.relationships():
-                self.render_pd_item(g, edge)
+                self.render_pd_item(g, g_nx, edge)
+
         elif isinstance(item, list):
             for it in item:
-                self.render_pd_item(g, it)
+                self.render_pd_item(g, g_nx, it)
