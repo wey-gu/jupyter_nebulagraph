@@ -116,7 +116,7 @@ Just call `%ng_draw` after queries with graph data.
 %ng_draw
 ```
 
-![](https://user-images.githubusercontent.com/1651790/236797874-c142cfd8-b0de-4689-95ef-1da386e137d3.png)
+![](https://github.com/wey-gu/ipython-ngql/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
 
 ### Configure `ngql_result_style`
 
