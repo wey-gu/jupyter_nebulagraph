@@ -118,6 +118,12 @@ Just call `%ng_draw` after queries with graph data.
 
 ![](https://github.com/wey-gu/ipython-ngql/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
 
+### Draw Graph Schema
+
+```python
+%ng_draw_schema
+```
+
 ### Configure `ngql_result_style`
 
 By default, `ipython-ngql` will use pandas dataframe as output style to enable more human-readable output, while it's supported to use the raw thrift data format that comes from the `nebula3-python` itself.

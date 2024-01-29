@@ -21,6 +21,23 @@ from nebula3.gclient.net import ConnectionPool as NebulaConnectionPool
 from nebula3.Config import Config as NebulaConfig
 
 
+rel_query_sample_edge = Template(
+    """
+MATCH ()-[e:`{{ edge_type }}`]->()
+RETURN [src(e), dst(e)] AS sample_edge LIMIT 1
+"""
+)
+
+
+rel_query_edge_type = Template(
+    """
+MATCH (m)-[:`{{ edge_type }}`]->(n)
+  WHERE id(m) == "{{ src_id }}" AND id(n) == "{{ dst_id }}"
+RETURN tags(m)[0] AS src_tag, tags(n)[0] AS dst_tag
+"""
+)
+
+
 CONNECTION_POOL_INIT_FAILURE = -2  # Failure occurred during connection_pool.init
 CONNECTION_POOL_NONE = -1  # self.connection_pool was never initiated
 CONNECTION_POOL_EXISTED = 0  # self.connection_pool existed & no new created
@@ -368,6 +385,152 @@ class IPythonNGQL(Magics, Configurable):
             try:
                 display(
                     IFrame(src="nebulagraph.html", width="100%", height="500px")
+                )
+            except Exception as e:
+                print(f"[WARN]: failed to display the graph\n { e }")
+
+        return g
+
+    @needs_local_scope
+    @line_cell_magic
+    @magic_arguments()
+    @argument("space", default="", nargs="?", type=str, help="space name")
+    def ng_draw_schema(self, line):
+        args = parse_argstring(self.ng_draw_schema, line)
+        space = args.space if args.space else self.space
+        if space is None:
+            return "Please specify the space name or run `USE <space_name>` first."
+
+        tags_schema, edge_types_schema, relationship_samples = [], [], []
+        for tag in self._execute("SHOW TAGS").column_values("Name"):
+            tag_name = tag.cast()
+            tag_schema = {"tag": tag_name, "properties": []}
+            r = self._execute(f"DESCRIBE TAG `{tag_name}`")
+            props, types, comments = (
+                r.column_values("Field"),
+                r.column_values("Type"),
+                r.column_values("Comment"),
+            )
+            for i in range(r.row_size()):
+                # back compatible with old version of nebula-python
+                property_defination = (
+                    (props[i].cast(), types[i].cast())
+                    if comments[i].is_empty()
+                    else (props[i].cast(), types[i].cast(), comments[i].cast())
+                )
+                tag_schema["properties"].append(property_defination)
+            tags_schema.append(tag_schema)
+        for edge_type in self._execute("SHOW EDGES").column_values("Name"):
+            edge_type_name = edge_type.cast()
+            edge_schema = {"edge": edge_type_name, "properties": []}
+            r = self._execute(f"DESCRIBE EDGE `{edge_type_name}`")
+            props, types, comments = (
+                r.column_values("Field"),
+                r.column_values("Type"),
+                r.column_values("Comment"),
+            )
+            for i in range(r.row_size()):
+                # back compatible with old version of nebula-python
+                property_defination = (
+                    (props[i].cast(), types[i].cast())
+                    if comments[i].is_empty()
+                    else (props[i].cast(), types[i].cast(), comments[i].cast())
+                )
+                edge_schema["properties"].append(property_defination)
+            edge_types_schema.append(edge_schema)
+
+            # build sample edge
+            sample_edge = self._execute(
+                rel_query_sample_edge.render(edge_type=edge_type_name)
+            ).column_values("sample_edge")
+            if len(sample_edge) == 0:
+                continue
+            src_id, dst_id = sample_edge[0].cast()
+            r = self._execute(
+                rel_query_edge_type.render(
+                    edge_type=edge_type_name, src_id=src_id, dst_id=dst_id
+                )
+            )
+            if (
+                len(r.column_values("src_tag")) == 0
+                or len(r.column_values("dst_tag")) == 0
+            ):
+                continue
+            src_tag, dst_tag = (
+                r.column_values("src_tag")[0].cast(),
+                r.column_values("dst_tag")[0].cast(),
+            )
+            relationship_samples.append(
+                {
+                    "src_tag": src_tag,
+                    "dst_tag": dst_tag,
+                    "edge_type": edge_type_name,
+                }
+            )
+
+        # Create a graph of relationship_samples
+        # The nodes are tags, with their properties schema as attributes
+        # The edges are relationship_samples, with their properties schema as attributes
+
+        g = Network(
+            notebook=True,
+            directed=True,
+            cdn_resources="in_line",
+            height="500px",
+            width="100%",
+            bgcolor="#002B36",
+            font_color="#93A1A1",
+            neighborhood_highlight=True,
+        )
+        g_nx = nx.MultiDiGraph()
+        for tag_schema in tags_schema:
+            tag_name = tag_schema["tag"]
+            g.add_node(
+                tag_name,
+                label=tag_name,
+                title=str(tag_schema),
+                color=get_color(tag_name),
+            )
+            g_nx.add_node(tag_name, **tag_schema)
+
+        for edge_schema in relationship_samples:
+            src_tag, dst_tag, edge_type = (
+                edge_schema["src_tag"],
+                edge_schema["dst_tag"],
+                edge_schema["edge_type"],
+            )
+            g.add_edge(src_tag, dst_tag, label=edge_type, title=str(edge_schema))
+            g_nx.add_edge(src_tag, dst_tag, **edge_schema)
+
+        g.repulsion(
+            node_distance=90,
+            central_gravity=0.2,
+            spring_length=200,
+            spring_strength=0.05,
+            damping=0.09,
+        )
+        # g.show_buttons(filter_='physics')
+        # return g.show("nebulagraph_draw.html", notebook=True)
+        g_html_string = g.generate_html("nebulagraph_schema.html")
+        with open("nebulagraph_schema.html", "w", encoding="utf-8") as f:
+            f.write(g_html_string)
+        # detect if we are in colab or not
+        try:
+            if "google.colab" in str(get_ipython()):
+                display(HTML(g_html_string))
+            else:
+                display(
+                    IFrame(
+                        src="nebulagraph_schema.html", width="100%", height="500px"
+                    )
+                )
+        except Exception as e:
+            print(f"[WARN]: failed to display the graph\n { e }")
+            try:
+                display(
+                    IFrame(
+                        src="nebulagraph_schema.html", width="100%", height="500px"
+                    )
                 )
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
