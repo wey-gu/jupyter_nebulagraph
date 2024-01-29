@@ -311,6 +311,9 @@ class IPythonNGQL(Magics, Configurable):
 
         %ng_draw
 
+        > Query and draw the graph schema
+
+        %ng_draw_schema
 
         """
         print(help_info)
@@ -391,15 +394,25 @@ class IPythonNGQL(Magics, Configurable):
 
         return g
 
-    @needs_local_scope
     @line_cell_magic
     @magic_arguments()
-    @argument("space", default="", nargs="?", type=str, help="space name")
-    def ng_draw_schema(self, line):
+    @argument("line", default="", nargs="?", type=str, help="space name")
+    def ng_draw_schema(self, line, cell=None, local_ns={}):
+        try:
+            from pyvis.network import Network
+            from IPython.display import display, IFrame, HTML
+
+            # import get_ipython
+            from IPython import get_ipython
+
+        except ImportError:
+            raise ImportError("Please install pyvis to draw the graph schema")
+
         args = parse_argstring(self.ng_draw_schema, line)
-        space = args.space if args.space else self.space
+        space = args.line if args.line else self.space
         if space is None:
             return "Please specify the space name or run `USE <space_name>` first."
+        space = space.strip()
 
         tags_schema, edge_types_schema, relationship_samples = [], [], []
         for tag in self._execute("SHOW TAGS").column_values("Name"):

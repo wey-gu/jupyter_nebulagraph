@@ -189,7 +189,6 @@ Don't remember anything or even relying on the cheatsheet here, oen takeaway for
 
 ```python
 In [1]: %ngql help
-
 ```
 
 ### Examples
