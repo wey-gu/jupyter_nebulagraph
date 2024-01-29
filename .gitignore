@@ -5,7 +5,8 @@ dist
 */__pycache__
 
 # examples
-examples/.*
+examples/*.html
+*/.ipynb_checkpoints/*
 
 # macOS
 .DS_Store
