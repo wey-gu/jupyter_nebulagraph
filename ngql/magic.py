@@ -330,6 +330,8 @@ class IPythonNGQL(Magics, Configurable):
         #follow.csv
         "player999","player1000",50
 
+        %ng_load --source https://github.com/wey-gu/ipython-ngql/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer -b 2
+
 
         """
         print(help_info)

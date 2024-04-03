@@ -147,6 +147,8 @@ Just run the below line:
 Some other examples:
 
 ```python
+# load CSV from a URL
+%ng_load --source https://github.com/wey-gu/ipython-ngql/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer -b 2
 # with rank column
 %ng_load --source follow_with_rank.csv --edge follow --src 0 --dst 1 --props 2:degree --rank 3 --space basketballplayer
 # without rank column
