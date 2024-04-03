@@ -142,9 +142,7 @@ class IPythonNGQL(Magics, Configurable):
         if connection_state == CONNECTION_POOL_EXISTED:
             # Restore "->" in the query before executing it
             query = (
-                line.replace(ESCAPE_ARROW_STRING, "->")
-                + "\n"
-                + (cell if cell else "")
+                line.replace(ESCAPE_ARROW_STRING, "->") + "\n" + (cell if cell else "")
             )
             return self._stylized(self._execute(query))
         else:  # We shouldn't reach here
@@ -315,6 +313,24 @@ class IPythonNGQL(Magics, Configurable):
 
         %ng_draw_schema
 
+        > Load data from CSV file into NebulaGraph as vertices or edges
+        %ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer
+
+        #actor.csv
+        "player999","Tom Hanks",30
+        "player1000","Tom Cruise",40
+
+        %ng_load --source follow_with_rank.csv --edge follow --src 0 --dst 1 --props 2:degree --rank 3 --space basketballplayer
+
+        #follow_with_rank.csv
+        "player999","player1000",50,1
+
+        %ng_load --source follow.csv --edge follow --src 0 --dst 1 --props 2:degree --space basketballplayer
+
+        #follow.csv
+        "player999","player1000",50
+
+
         """
         print(help_info)
         return
@@ -380,15 +396,11 @@ class IPythonNGQL(Magics, Configurable):
             if "google.colab" in str(get_ipython()):
                 display(HTML(g_html_string))
             else:
-                display(
-                    IFrame(src="nebulagraph.html", width="100%", height="500px")
-                )
+                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
         except Exception as e:
             print(f"[WARN]: failed to display the graph\n { e }")
             try:
-                display(
-                    IFrame(src="nebulagraph.html", width="100%", height="500px")
-                )
+                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
 
@@ -533,17 +545,13 @@ class IPythonNGQL(Magics, Configurable):
                 display(HTML(g_html_string))
             else:
                 display(
-                    IFrame(
-                        src="nebulagraph_schema.html", width="100%", height="500px"
-                    )
+                    IFrame(src="nebulagraph_schema.html", width="100%", height="500px")
                 )
         except Exception as e:
             print(f"[WARN]: failed to display the graph\n { e }")
             try:
                 display(
-                    IFrame(
-                        src="nebulagraph_schema.html", width="100%", height="500px"
-                    )
+                    IFrame(src="nebulagraph_schema.html", width="100%", height="500px")
                 )
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
@@ -576,9 +584,7 @@ class IPythonNGQL(Magics, Configurable):
             if "id" not in props:
                 props["id"] = node_id
 
-            g.add_node(
-                node_id, label=label, title=str(props), color=get_color(node_id)
-            )
+            g.add_node(node_id, label=label, title=str(props), color=get_color(node_id))
 
             # networkx
             if len(tags) > 1:
@@ -613,9 +619,7 @@ class IPythonNGQL(Magics, Configurable):
             for k in props:
                 if len(props_str_list) >= 1:
                     break
-                props_str_list.append(
-                    f"{truncate(k, 7)}: {truncate(str(props[k]), 8)}"
-                )
+                props_str_list.append(f"{truncate(k, 7)}: {truncate(str(props[k]), 8)}")
             props_str = "\n".join(props_str_list)
 
             label = f"{props_str}\n{edge_name}" if props else edge_name
@@ -633,3 +637,299 @@ class IPythonNGQL(Magics, Configurable):
         elif isinstance(item, list):
             for it in item:
                 self.render_pd_item(g, g_nx, it)
+
+    @line_cell_magic
+    @magic_arguments()
+    @argument(
+        "--header",
+        action="store_true",
+        help="Specify if the CSV file contains a header row",
+    )
+    @argument("-n", "--space", type=str, help="Space name")
+    @argument("-s", "--source", type=str, help="File path or URL to the CSV file")
+    @argument("-t", "--tag", type=str, help="Tag name for vertices")
+    @argument("--vid", type=int, help="Vertex ID column index")
+    @argument("-e", "--edge", type=str, help="Edge type name")
+    @argument("--src", type=int, help="Source vertex ID column index")
+    @argument("--dst", type=int, help="Destination vertex ID column index")
+    @argument("--rank", type=int, help="Rank column index", default=None)
+    @argument(
+        "--props",
+        type=str,
+        help="Property mapping, comma-separated column indexes",
+        default=None,
+    )
+    @argument(
+        "-b", "--batch", type=int, help="Batch size for data loading", default=256
+    )
+    def ng_load(self, line, cell=None, local_ns={}):
+        """
+        Load data from CSV file into NebulaGraph as vertices or edges
+
+        Examples:
+        %ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer
+        %ng_load --source follow_with_rank.csv --edge follow --src 0 --dst 1 --props 2:degree --rank 3 --space basketballplayer
+        %ng_load --source follow.csv --edge follow --src 0 --dst 1 --props 2:degree --space basketballplayer
+
+        #actor.csv
+        "player999","Tom Hanks",30
+        "player1000","Tom Cruise",40
+
+        #follow_with_rank.csv
+        "player999","player1000",50,1
+        """
+        if self.connection_pool is None:
+            print(
+                "Please connect to NebulaGraph first using %ngql magic before using ng_load"
+                "\nExample: %ngql --address 127.0.0.1 --port 9669 --user root --password nebula"
+            )
+            return
+
+        try:
+            import requests
+            import pandas as pd
+            from io import StringIO
+        except ImportError:
+            raise ImportError(
+                "Please install requests and pandas to use ng_load"
+                " magic: %pip3 install requests pandas"
+            )
+
+        args = parse_argstring(self.ng_load, line)
+
+        # Check if space is specified
+        if args.space is None:
+            print("Please specify the space name using --space")
+            return
+        space = args.space
+
+        # Inspect space to get Vid Type
+        r = self._execute(f"DESC SPACE `{space}`")
+        try:
+            assert len(r.column_values("Vid Type")) == 1, "Space may not exist"
+            vid_type = r.column_values("Vid Type")[0].cast()
+        except Exception as e:
+            raise ValueError(
+                f"Failed to get Vid Type from space '{self.space}', error: {e}"
+            )
+
+        vid_length = 0
+        if "FIXED_STRING" in vid_type:
+            vid_length = int(vid_type.split("(")[1].split(")")[0])
+        is_vid_int = vid_length == 0
+
+        # Validate required arguments
+        if not args.tag and not args.edge:
+            print(
+                "Missing required argument: --tag tag_name for vertex loading or --edge edge_type for edge loading"
+            )
+            return
+
+        # If with header
+        with_header = args.header
+
+        # Load CSV from file or URL
+        if args.source.startswith("http://") or args.source.startswith("https://"):
+            response = requests.get(args.source)
+            csv_string = response.content.decode("utf-8")
+            df = pd.read_csv(StringIO(csv_string), header=0 if with_header else None)
+        else:
+            df = pd.read_csv(args.source, header=0 if with_header else None)
+
+        # Build schema type map for tag or edge type
+        prop_schema_map = {}
+        DESC_TYPE = "TAG" if args.tag else "EDGE"
+        DESC_TARGET = args.tag if args.tag else args.edge
+        r = self._execute(f"USE {space}; DESCRIBE {DESC_TYPE} `{DESC_TARGET}`")
+        props, types, nullable = (
+            r.column_values("Field"),
+            r.column_values("Type"),
+            r.column_values("Null"),
+        )
+        for i in range(r.row_size()):
+            # back compatible with old version of nebula-python
+            prop_schema_map[props[i].cast()] = {
+                "type": types[i].cast(),
+                "nullable": nullable[i].cast() == "YES",
+            }
+
+        # Process properties mapping
+        props_mapping = (
+            {int(k): v for k, v in (prop.split(":") for prop in args.props.split(","))}
+            if args.props
+            else {}
+        )
+        # Values of props_mapping are property names they should be strings
+        # Keys of props_mapping are column indexes they should be integers
+        for k, v in props_mapping.items():
+            if not isinstance(k, int):
+                print(
+                    f"ERROR during prop mapping validation: Key '{k}' in property mapping is not an integer"
+                )
+                return
+            if not isinstance(v, str):
+                print(
+                    f"ERROR during prop mapping validation: Value '{v}' in property mapping is not a string"
+                )
+                return
+            if k >= len(df.columns) or k < 0:
+                print(
+                    f"ERROR during prop mapping validation: Key '{k}' in property mapping is out of range: 0-{len(df.columns)-1}"
+                )
+                return
+
+        with_props = True if props_mapping else False
+
+        # Validate props_mapping against schema
+        matched = True
+        for i, prop in props_mapping.items():
+            if prop not in prop_schema_map:
+                print(
+                    f"Error: Property '{prop}' not found in schema for {DESC_TYPE} '{args.tag}'"
+                )
+                matched = False
+        for prop in prop_schema_map:
+            # For not nullable properties, check if they are in props_mapping
+            if (
+                not prop_schema_map[prop]["nullable"]
+                and prop not in props_mapping.values()
+            ):
+                print(
+                    f"Error: Property '{prop}' is not nullable and not found in property mapping"
+                )
+                matched = False
+
+        if not matched:
+            print("Error: Property mapping does not match schema")
+            return
+
+        if args.rank is not None:
+            with_rank = True
+        else:
+            with_rank = False
+
+        # Prepare data for loading
+        if args.tag and not args.edge:
+            if args.vid is None:
+                raise ValueError("Missing required argument: --vid for vertex ID")
+            # Process properties mapping
+            vertex_data_columns = ["___vid"] + [
+                props_mapping[i] for i in range(len(df.columns)) if i in props_mapping
+            ]
+            vertex_data = df.iloc[:, [args.vid] + list(props_mapping.keys())]
+            vertex_data.columns = vertex_data_columns
+            # Here you would load vertex_data into NebulaGraph under the specified tag and space
+            print(
+                f"Parsed {len(vertex_data)} vertices '{args.space}' for tag '{args.tag}' in memory"
+            )
+        elif args.edge and not args.tag:
+            if args.src is None or args.dst is None:
+                raise ValueError(
+                    "Missing required arguments: --src and/or --dst for edge source and destination IDs"
+                )
+            # Process properties mapping
+            edge_data_columns = ["___src", "___dst"] + [
+                props_mapping[i] for i in range(len(df.columns)) if i in props_mapping
+            ]
+            edge_data_indices = [args.src, args.dst] + list(props_mapping.keys())
+            if with_rank:
+                edge_data_columns += ["___rank"]
+                edge_data_indices += [args.rank]
+            edge_data = df.iloc[:, edge_data_indices]
+            edge_data.columns = edge_data_columns
+            # Here you would load edge_data into NebulaGraph under the specified edge type and space
+            print(
+                f"Parsed {len(edge_data)} edges '{args.space}' for edge type '{args.edge}' in memory"
+            )
+        else:
+            raise ValueError(
+                "Specify either --tag for vertex loading or --edge for edge loading, not both"
+            )
+
+        # Load data into NebulaGraph
+        batch_size = args.batch
+
+        QUOTE_VID = "" if is_vid_int else '"'
+        QUOTE = '"'
+
+        if args.tag:
+            # Load vertex_data into NebulaGraph under the specified tag and space
+            # Now prepare INSERT query for vertices in batches
+            # Example of QUERY: INSERT VERTEX t2 (name, age) VALUES "13":("n3", 12), "14":("n4", 8);
+
+            for i in range(0, len(vertex_data), batch_size):
+                batch = vertex_data.iloc[i : i + batch_size]
+                query = f"INSERT VERTEX {args.tag} ({', '.join([col for col in vertex_data.columns if col != '___vid'])}) VALUES "
+                for index, row in batch.iterrows():
+                    vid_str = f'{QUOTE_VID}{row["___vid"]}{QUOTE_VID}'
+                    prop_str = ""
+                    if with_props:
+                        for prop_name in props_mapping.values():
+                            prop_value = row[prop_name]
+                            if pd.isnull(prop_value):
+                                if not prop_schema_map[prop_name]["nullable"]:
+                                    raise ValueError(
+                                        f"Error: Property '{prop_name}' is not nullable but received NULL value, "
+                                        f"data: {row}, column: {prop_name}"
+                                    )
+                                prop_str += "NULL, "
+                            elif prop_schema_map[prop_name]["type"] == "string":
+                                prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            else:
+                                prop_str += f"{prop_value}, "
+                        prop_str = prop_str[:-2]
+                    query += f"{vid_str}:({prop_str}), "
+                query = query[:-2] + ";"
+                try:
+                    result = self._execute(query)
+                except Exception as e:
+                    print(
+                        f"INSERT Failed on row {i + index}, data: {row}, error: {result.error_msg()}"
+                    )
+                    return
+
+            print(
+                f"Successfully loaded {len(vertex_data)} vertices '{args.space}' for tag '{args.tag}'"
+            )
+        elif args.edge:
+            # Load edge_data into NebulaGraph under the specified edge type and space
+            # Now prepare INSERT query for edges in batches
+            # Example of QUERY:
+            # with_rank INSERT EDGE e1 (name, age) VALUES "13" -> "14"@1:("n3", 12), "14" -> "15"@132:("n4", 8);
+            # without_rank INSERT EDGE e1 (name, age) VALUES "13" -> "14":("n3", 12), "14" -> "15":("n4", 8);
+
+            for i in range(0, len(edge_data), batch_size):
+                batch = edge_data.iloc[i : i + batch_size]
+                query = f"INSERT EDGE {args.edge} ({', '.join([col for col in edge_data.columns if col not in ['___src', '___dst', '___rank']])}) VALUES "
+                for index, row in batch.iterrows():
+                    src_str = f'{QUOTE_VID}{row["___src"]}{QUOTE_VID}'
+                    dst_str = f'{QUOTE_VID}{row["___dst"]}{QUOTE_VID}'
+                    prop_str = ""
+                    if with_props:
+                        for prop_name in props_mapping.values():
+                            prop_value = row[prop_name]
+                            if pd.isnull(prop_value):
+                                if not prop_schema_map[prop_name]["nullable"]:
+                                    raise ValueError(
+                                        f"Error: Property '{prop_name}' is not nullable but received NULL value, "
+                                        f"data: {row}, column: {prop_name}"
+                                    )
+                                prop_str += "NULL, "
+                            elif prop_schema_map[prop_name]["type"] == "string":
+                                prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            else:
+                                prop_str += f"{prop_value}, "
+                        prop_str = prop_str[:-2]
+                    if with_rank:
+                        rank_str = f"@{row['___rank']}"
+                    else:
+                        rank_str = ""
+                    query += f"{src_str} -> {dst_str}{rank_str}:({prop_str}), "
+                query = query[:-2] + ";"
+                try:
+                    result = self._execute(query)
+                except Exception as e:
+                    print(
+                        f"INSERT Failed on row {i + index}, data: {row}, error: {result.error_msg()}"
+                    )
+                    return

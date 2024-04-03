@@ -25,9 +25,7 @@ def render_pd_item(g, item):
         for tag in tags:
             props.update(item.properties(tag))
 
-        g.add_node(
-            node_id, label=node_id, title=str(props), color=get_color(node_id)
-        )
+        g.add_node(node_id, label=node_id, title=str(props), color=get_color(node_id))
     elif isinstance(item, Relationship):
         src_id = item.start_vertex_id().cast()
         dst_id = item.end_vertex_id().cast()
