@@ -16,7 +16,7 @@ nav:
   - Configurations: configurations.md
   - Cheat Sheet: cheatsheet.md
   - Examples: get_started.ipynb
-  - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/get_started.ipynb
+  - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
 
 
 repo_url: https://github.com/wey-gu/jupyter_nebulagraph
