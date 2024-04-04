@@ -24,6 +24,7 @@ repo_name: jupyter_nebulagraph
 
 
 theme:
+  favicon: images/favicon.png
   name: material
   palette:
     primary: white
@@ -34,7 +35,7 @@ theme:
   font:
     text: 'Roboto'
     code: 'Roboto Mono'
-  logo: 'nebula_jupyter_logo_dark.png'
+  logo: 'images/nebula_jupyter_logo_dark.png'
   features:
     - navigation.instant
     - navigation.tabs
