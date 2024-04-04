@@ -1,7 +1,7 @@
 
 [![for NebulaGraph](https://img.shields.io/badge/Toolchain-NebulaGraph-blue)](https://github.com/vesoft-inc/nebula) [![Jupyter](https://img.shields.io/badge/Jupyter-Supported-brightgreen)](https://github.com/jupyterlab/jupyterlab) [![Docker Image](https://img.shields.io/docker/v/weygu/nebulagraph-jupyter?label=Image&logo=docker)](https://hub.docker.com/r/weygu/nebulagraph-jupyter) [![Docker Extension](https://img.shields.io/badge/Docker-Extension-blue?logo=docker)](https://hub.docker.com/extensions/weygu/nebulagraph-dd-ext) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wey-gu/jupyter_nebulagraph?label=Version)](https://github.com/wey-gu/jupyter_nebulagraph/releases)
 [![pypi-version](https://img.shields.io/pypi/v/jupyter_nebulagraph)](https://pypi.org/project/jupyter_nebulagraph/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb)
 
 
 https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/10135264-77b5-4d3c-b68f-c5810257feeb
@@ -17,9 +17,9 @@ Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Ca
 
 ## Get Started
 
-Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb).
+Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb).
 
-Or see the getting started guide [here](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb).
+Or see the getting started guide [here](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb).
 
 ### Installation
 
@@ -80,8 +80,6 @@ Option 2: The multiple lines stype with `%%ngql `
 SHOW TAGS;
 SHOW HOSTS;
 ```
-
-> There will be other options in future, i.e. from a `.ngql` file.
 
 ### Query String with Variables
 
@@ -227,7 +225,7 @@ In [1]: %ngql help
 
 #### Jupyter Notebook
 
-Please refer here:https://github.com/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb
+Please refer here: [get_started.ipynb](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb)
 
 #### iPython
 

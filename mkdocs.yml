@@ -1,0 +1,64 @@
+site_name: NebulaGraph Jupyter Extension
+
+plugins:
+  - mkdocs-jupyter
+
+nav:
+  - Home:
+    - NebulaGraph Jupyter: index.md
+    - Get Started: get_started.ipynb
+  - Installation: installation.md
+  - Commands:
+    - ngql: magic_words/ngql.md
+    - ng_draw: magic_words/ng_draw.md
+    - ng_draw_schema: magic_words/ng_draw_schema.md
+    - ng_load: magic_words/ng_load.md
+  - Configurations: configurations.md
+  - Cheat Sheet: cheatsheet.md
+  - Examples: get_started.ipynb
+  - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/get_started.ipynb
+
+
+repo_url: https://github.com/wey-gu/jupyter_nebulagraph
+repo_name: jupyter_nebulagraph
+
+
+theme:
+  name: material
+  palette:
+    primary: white
+    accent: white
+    scheme: slate
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: 'Roboto'
+    code: 'Roboto Mono'
+  logo: 'nebulagraph_jupyter_ext_logo_dark.png'
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - content.code.copy
+  palette:
+    - media: (prefers-color-scheme)
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - accent: purple
+      media: "(prefers-color-scheme: light)"
+      primary: white
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - accent: purple
+      media: "(prefers-color-scheme: dark)"
+      primary: black
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
