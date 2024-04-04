@@ -225,7 +225,7 @@ In [1]: %ngql help
 
 #### Jupyter Notebook
 
-Please refer here:https://github.com/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
+Please refer here: [get_started.ipynb](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb)
 
 #### iPython
 
