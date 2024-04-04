@@ -599,10 +599,12 @@ class IPythonNGQL(Magics, Configurable):
             dst_id = str(item.end_vertex_id().cast())
             edge_name = item.edge_name()
             props_raw = item.properties()
+            rank = item.ranking()
             props = {
                 k: str(v.cast()) if hasattr(v, "cast") else str(v)
                 for k, v in props_raw.items()
             }
+            props.update({"rank": rank})
             # ensure start and end vertex exist in graph
             if not src_id in g.node_ids:
                 g.add_node(
@@ -626,7 +628,13 @@ class IPythonNGQL(Magics, Configurable):
             props_str = "\n".join(props_str_list)
 
             label = f"{props_str}\n{edge_name}" if props else edge_name
-            g.add_edge(src_id, dst_id, label=label, title=str(props))
+            g.add_edge(
+                src_id,
+                dst_id,
+                label=label,
+                title=str(props),
+                weight=props.get("rank", 0),
+            )
             # networkx
             props["edge_type"] = edge_name
             g_nx.add_edge(src_id, dst_id, **props)
