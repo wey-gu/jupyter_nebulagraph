@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/wey-gu/jupyter_nebulagraph",
     project_urls={
         "Bug Tracker": "https://github.com/wey-gu/jupyter_nebulagraph/issues",
+        "Documentation": "https://jupyter-nebulagraph.readthedocs.io/",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
