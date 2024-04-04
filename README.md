@@ -1,12 +1,11 @@
 
-[![for NebulaGraph](https://img.shields.io/badge/Toolchain-NebulaGraph-blue)](https://github.com/vesoft-inc/nebula) [![Jupyter](https://img.shields.io/badge/Jupyter-Supported-brightgreen)](https://github.com/jupyterlab/jupyterlab) [![Docker Image](https://img.shields.io/docker/v/weygu/nebulagraph-jupyter?label=Image&logo=docker)](https://hub.docker.com/r/weygu/nebulagraph-jupyter) [![Docker Extension](https://img.shields.io/badge/Docker-Extension-blue?logo=docker)](https://hub.docker.com/extensions/weygu/nebulagraph-dd-ext) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wey-gu/ipython-ngql?label=Version)](https://github.com/wey-gu/ipython-ngql/releases)
-[![pypi-version](https://img.shields.io/pypi/v/ipython-ngql)](https://pypi.org/project/ipython-ngql/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb)
+[![for NebulaGraph](https://img.shields.io/badge/Toolchain-NebulaGraph-blue)](https://github.com/vesoft-inc/nebula) [![Jupyter](https://img.shields.io/badge/Jupyter-Supported-brightgreen)](https://github.com/jupyterlab/jupyterlab) [![Docker Image](https://img.shields.io/docker/v/weygu/nebulagraph-jupyter?label=Image&logo=docker)](https://hub.docker.com/r/weygu/nebulagraph-jupyter) [![Docker Extension](https://img.shields.io/badge/Docker-Extension-blue?logo=docker)](https://hub.docker.com/extensions/weygu/nebulagraph-dd-ext) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wey-gu/jupyter_nebulagraph?label=Version)](https://github.com/wey-gu/jupyter_nebulagraph/releases)
+[![pypi-version](https://img.shields.io/pypi/v/jupyter_nebulagraph)](https://pypi.org/project/jupyter_nebulagraph/)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb)
 
 
-https://github.com/wey-gu/ipython-ngql/assets/1651790/10135264-77b5-4d3c-b68f-c5810257feeb
-
-`ipython-ngql` is a Python package for connecting to NebulaGraph in Jupyter Notebook or iPython. It simplifies creating, debugging, and sharing Jupyter Notebooks with NebulaGraph interactions for better collaboration.
+https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/10135264-77b5-4d3c-b68f-c5810257feeb
+`jupyter_nebulagraph` (previously known as `ipython-ngql`) is a Python package designed to facilitate connections to NebulaGraph directly from Jupyter Notebooks or iPython environments. It streamlines the process of creating, debugging, and sharing Jupyter Notebooks that interact with NebulaGraph, enhancing collaborative efforts.
 
 Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Catherine Devlin](https://catherinedevlin.blogspot.com/).
 
@@ -18,23 +17,25 @@ Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Ca
 
 ## Get Started
 
-Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb).
+Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb).
+
+Or see the getting started guide [here](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb).
 
 ### Installation
 
-`ipython-ngql` could be installed either via pip or from this git repo itself.
+`jupyter_nebulagraph` could be installed either via pip or from this git repo itself.
 
 > Install via pip
 
 ```bash
-pip install ipython-ngql
+pip install jupyter_nebulagraph
 ```
 
 > Install inside the repo
 
 ```bash
-git clone git@github.com:wey-gu/ipython-ngql.git
-cd ipython-ngql
+git clone git@github.com:wey-gu/jupyter_nebulagraph.git
+cd jupyter_nebulagraph
 python setup.py install
 ```
 
@@ -84,7 +85,7 @@ SHOW HOSTS;
 
 ### Query String with Variables
 
-`ipython-ngql` supports taking variables from the local namespace, with the help of [Jinja2](https://jinja.palletsprojects.com/) template framework, it's supported to have queries like the below example.
+`jupyter_nebulagraph` supports taking variables from the local namespace, with the help of [Jinja2](https://jinja.palletsprojects.com/) template framework, it's supported to have queries like the below example.
 
 The actual query string should be `GO FROM "Sue" OVER owns_pokemon ...`, and `"{{ trainer }}"` was renderred as `"Sue"` by consuming the local variable `trainer`:
 
@@ -116,7 +117,7 @@ Just call `%ng_draw` after queries with graph data.
 %ng_draw
 ```
 
-![](https://github.com/wey-gu/ipython-ngql/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
+![](https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
 
 ### Draw Graph Schema
 
@@ -124,7 +125,7 @@ Just call `%ng_draw` after queries with graph data.
 %ng_draw_schema
 ```
 
-![](https://github.com/wey-gu/ipython-ngql/assets/1651790/81fd71b5-61e7-4c65-93be-c2f4e507611b)
+![](https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/81fd71b5-61e7-4c65-93be-c2f4e507611b)
 
 ### Load Data from CSV
 
@@ -148,7 +149,7 @@ Some other examples:
 
 ```python
 # load CSV from a URL
-%ng_load --source https://github.com/wey-gu/ipython-ngql/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer -b 2
+%ng_load --source https://github.com/wey-gu/jupyter_nebulagraph/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer
 # with rank column
 %ng_load --source follow_with_rank.csv --edge follow --src 0 --dst 1 --props 2:degree --rank 3 --space basketballplayer
 # without rank column
@@ -157,7 +158,7 @@ Some other examples:
 
 ### Configure `ngql_result_style`
 
-By default, `ipython-ngql` will use pandas dataframe as output style to enable more human-readable output, while it's supported to use the raw thrift data format that comes from the `nebula3-python` itself.
+By default, `jupyter_nebulagraph` will use pandas dataframe as output style to enable more human-readable output, while it's supported to use the raw thrift data format that comes from the `nebula3-python` itself.
 
 This can be done ad-hoc with below one line:
 
@@ -226,7 +227,7 @@ In [1]: %ngql help
 
 #### Jupyter Notebook
 
-Please refer here:https://github.com/wey-gu/ipython-ngql/blob/main/examples/get_started.ipynb
+Please refer here:https://github.com/wey-gu/jupyter_nebulagraph/blob/main/examples/get_started.ipynb
 
 #### iPython
 
