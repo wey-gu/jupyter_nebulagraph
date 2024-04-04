@@ -18,12 +18,16 @@ Inspired by [ipython-sql](https://github.com/catherinedevlin/ipython-sql) by [Ca
 
 ![](https://user-images.githubusercontent.com/1651790/236798238-49dd59c9-0827-4a86-b714-fb195e6be4b9.png)
 
+![](https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/b3d9ca07-2eb1-45ae-949b-543f58a57760)
 
-## Get Started
+## Getting Started
 
-Try it out in [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb).
+Explore the capabilities of `jupyter_nebulagraph` by trying it on [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb), and the equivalent Jupyter Notebook is available in Docs [here](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/).
 
-Or check [Docs: Get Started](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/).
+For a comprehensive guide, visit the [official documentation](https://jupyter-nebulagraph.readthedocs.io/).
+
+<details>
+<summary>Click to see more!</summary>
 
 ### Installation
 
@@ -158,97 +162,26 @@ Some other examples:
 %ng_load --source follow.csv --edge follow --src 0 --dst 1 --props 2:degree --space basketballplayer
 ```
 
-### Configure `ngql_result_style`
+### Tweak Query Result
 
-By default, `jupyter_nebulagraph` will use pandas dataframe as output style to enable more human-readable output, while it's supported to use the raw thrift data format that comes from the `nebula3-python` itself.
-
-This can be done ad-hoc with below one line:
+By default, the query result is a Pandas Dataframe, and we could access that by read from variable `_`.
 
 ```python
-%config IPythonNGQL.ngql_result_style="raw"
+In [1]: %ngql MATCH (v:player{name:"Tim Duncan"})-->(v2:player) RETURN v2.player.name AS Name;
+
+In [2]: df = _
 ```
 
-After the above line is executed, the output will be like this:
+It's also configurable to have the result in raw ResultSet, to enable handy NebulaGraph Python App Development.
+
+See more via [Docs: Result Handling](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/#result-handling)
+
+### CheatSheet
+
+If you find yourself forgetting commands or not wanting to rely solely on the cheat sheet, remember this one thing: seek help through the help command!
 
 ```python
-ResultSet(ExecutionResponse(
-    error_code=0,
-    latency_in_us=2844,
-    data=DataSet(
-        column_names=[b'Trainer_Name'],
-        rows=[Row(
-            values=[Value(
-                sVal=b'Tom')]),
-...
-        Row(
-            values=[Value(
-                sVal=b'Wey')])]),
-    space_name=b'pokemon_club'))
+%ngql help
 ```
 
-The result are always stored in variable `_` in Jupyter Notebook, thus, to tweak the result, just refer a new var to it like:
-
-```python
-In [1] : %config IPythonNGQL.ngql_result_style="raw"
-
-In [2] : %%ngql USE pokemon_club;
-    ...: GO FROM "Tom" OVER owns_pokemon YIELD owns_pokemon._dst as pokemon_id
-    ...: | GO FROM $-.pokemon_id OVER owns_pokemon REVERSELY YIELD owns_pokemon._dst AS Trainer_Name;
-    ...:
-    ...:
-Out[3]:
-ResultSet(ExecutionResponse(
-    error_code=0,
-    latency_in_us=3270,
-    data=DataSet(
-        column_names=[b'Trainer_Name'],
-        rows=[Row(
-            values=[Value(
-                sVal=b'Tom')]),
-...
-        Row(
-            values=[Value(
-                sVal=b'Wey')])]),
-    space_name=b'pokemon_club'))
-
-In [4]: r = _
-
-In [5]: r.column_values(key='Trainer_Name')[0].cast()
-Out[5]: 'Tom'
-```
-
-### Get Help
-
-Don't remember anything or even relying on the cheatsheet here, oen takeaway for you: the help!
-
-```python
-In [1]: %ngql help
-```
-
-### Examples
-
-#### Jupyter Notebook
-
-Please refer here: [get_started.ipynb](https://github.com/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb)
-
-#### iPython
-
-```python
-In [1]: %load_ext ngql
-
-In [2]: %ngql --address 192.168.8.128 --port 9669 --user root --password nebula
-Connection Pool Created
-Out[2]: 
-                        Name
-0           basketballplayer
-1  demo_movie_recommendation
-2                        k8s
-3                       test
-
-In [3]: %ngql USE basketballplayer;
-   ...: %ngql MATCH (v:player{name:"Tim Duncan"})-->(v2:player) RETURN v2.player.name AS Name;
-Out[3]: 
-            Name
-0    Tony Parker
-1  Manu Ginobili
-```
+</details>
