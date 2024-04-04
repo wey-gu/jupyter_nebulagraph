@@ -7,6 +7,7 @@ from IPython.core.magic import (
     needs_local_scope,
 )
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
+from tqdm.notebook import tqdm
 
 from typing import Dict, List
 import networkx as nx
@@ -330,7 +331,7 @@ class IPythonNGQL(Magics, Configurable):
         #follow.csv
         "player999","player1000",50
 
-        %ng_load --source https://github.com/wey-gu/ipython-ngql/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer -b 2
+        %ng_load --source https://github.com/wey-gu/ipython-ngql/raw/main/examples/actor.csv --tag player --vid 0 --props 1:name,2:age --space demo_basketballplayer
 
 
         """
@@ -859,7 +860,9 @@ class IPythonNGQL(Magics, Configurable):
             # Now prepare INSERT query for vertices in batches
             # Example of QUERY: INSERT VERTEX t2 (name, age) VALUES "13":("n3", 12), "14":("n4", 8);
 
-            for i in range(0, len(vertex_data), batch_size):
+            for i in tqdm(
+                range(0, len(vertex_data), batch_size), desc="Loading Vertices"
+            ):
                 batch = vertex_data.iloc[i : i + batch_size]
                 query = f"INSERT VERTEX {args.tag} ({', '.join([col for col in vertex_data.columns if col != '___vid'])}) VALUES "
                 for index, row in batch.iterrows():
@@ -889,6 +892,7 @@ class IPythonNGQL(Magics, Configurable):
                         f"INSERT Failed on row {i + index}, data: {row}, error: {result.error_msg()}"
                     )
                     return
+                tqdm.write(f"Loaded {i + len(batch)} of {len(vertex_data)} vertices")
 
             print(
                 f"Successfully loaded {len(vertex_data)} vertices '{args.space}' for tag '{args.tag}'"
@@ -900,7 +904,7 @@ class IPythonNGQL(Magics, Configurable):
             # with_rank INSERT EDGE e1 (name, age) VALUES "13" -> "14"@1:("n3", 12), "14" -> "15"@132:("n4", 8);
             # without_rank INSERT EDGE e1 (name, age) VALUES "13" -> "14":("n3", 12), "14" -> "15":("n4", 8);
 
-            for i in range(0, len(edge_data), batch_size):
+            for i in tqdm(range(0, len(edge_data), batch_size), desc="Loading Edges"):
                 batch = edge_data.iloc[i : i + batch_size]
                 query = f"INSERT EDGE {args.edge} ({', '.join([col for col in edge_data.columns if col not in ['___src', '___dst', '___rank']])}) VALUES "
                 for index, row in batch.iterrows():
@@ -935,3 +939,7 @@ class IPythonNGQL(Magics, Configurable):
                         f"INSERT Failed on row {i + index}, data: {row}, error: {result.error_msg()}"
                     )
                     return
+                tqdm.write(f"Loaded {i + len(batch)} of {len(edge_data)} edges")
+            print(
+                f"Successfully loaded {len(edge_data)} edges '{args.space}' for edge type '{args.edge}'"
+            )

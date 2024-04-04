@@ -1,3 +1,5 @@
 Jinja2
 nebula3-python>=3.5.0
 pandas
+tqdm
+pyvis
