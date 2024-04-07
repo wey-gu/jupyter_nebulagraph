@@ -20,3 +20,14 @@ Your browser does not support the video tag.
 ## Get Started
 
 For a more comprehensive guide on how to get started with `jupyter_nebulagraph`, please refer to the [Get Started Guide](/get_started). This guide provides step-by-step instructions on installation, connecting to NebulaGraph, making queries, and visualizing query results, making it easier for new users to get up and running.
+
+## Features
+
+| Feature | Cheat Sheet | Example | Command Documentation |
+| ------- | ----------- | --------- | ---------------------- |
+| Connect | `%ngql --address 127.0.0.1 --port 9669 --user user --password password` | [Connect](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/#connect-to-nebulagraph) | [`%ngql`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ngql/#connect-to-nebulagraph) |
+| Load Data from CSV | `%ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer` | [Load Data](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/#load-data-from-csv) | [`%ng_load`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_load/) |
+| Query Execution | `%ngql MATCH p=(v:player{name:"Tim Duncan"})-->(v2:player) RETURN p;`| [Query Execution](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/#query) | [`%ngql` or `%%ngql`(multi-line)](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ngql/#make-queries) |
+| Result Visualization | `%ng_draw` | [Draw Graph](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw/) | [`%ng_draw`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw/) |
+| Draw Schema | `%ng_draw_schema` | [Draw Schema](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw_schema/) | [`%ng_draw_schema`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw_schema/) |
+| Tweak Query Result | `df = _` to get last query result as `pd.dataframe` or [`ResultSet`](https://github.com/vesoft-inc/nebula-python/blob/master/nebula3/data/ResultSet.py) | [Tweak Result](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started/#result-handling) | [Configure `ngql_result_style`](https://jupyter-nebulagraph.readthedocs.io/en/latest/configurations/#configure-ngql_result_style) |
