@@ -6,7 +6,7 @@ plugins:
 nav:
   - Home:
     - NebulaGraph Jupyter: index.md
-    - Get Started: get_started.ipynb
+    - Get Started: get_started_docs.ipynb
     - Installation: installation.md
     - Commands:
       - ngql: magic_words/ngql.md
@@ -24,7 +24,7 @@ nav:
     - ng_load: magic_words/ng_load.md
   - Configurations: configurations.md
   - Cheat Sheet: cheatsheet.md
-  - Get Started: get_started.ipynb
+  - Get Started: get_started_docs.ipynb
   - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
 
 
