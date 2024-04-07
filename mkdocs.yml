@@ -24,7 +24,7 @@ nav:
     - ng_load: magic_words/ng_load.md
   - Configurations: configurations.md
   - Cheat Sheet: cheatsheet.md
-  - Examples: get_started.ipynb
+  - Get Started: get_started.ipynb
   - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
 
 
