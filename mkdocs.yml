@@ -7,6 +7,15 @@ nav:
   - Home:
     - NebulaGraph Jupyter: index.md
     - Get Started: get_started.ipynb
+    - Installation: installation.md
+    - Commands:
+      - ngql: magic_words/ngql.md
+      - ng_draw: magic_words/ng_draw.md
+      - ng_draw_schema: magic_words/ng_draw_schema.md
+      - ng_load: magic_words/ng_load.md
+    - Configurations: configurations.md
+    - Cheat Sheet: cheatsheet.md
+    - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
   - Installation: installation.md
   - Commands:
     - ngql: magic_words/ngql.md
