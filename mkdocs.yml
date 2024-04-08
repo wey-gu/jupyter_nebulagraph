@@ -85,6 +85,10 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/wey-gu/jupyter_nebulagraph
     - icon: fontawesome/brands/docker
-      link: https://hub.docker.com/r/weygu/jupyter_nebulagraph
+      link: https://hub.docker.com/r/weygu/nebulagraph-jupyter
+    - icon: fontawesome/brands/python
+      link: https://github.com/vesoft-inc/nebula-python
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/NebulaGraph
 
 copyright: Copyright &copy; 2021-2024, NebulaGraph Community
