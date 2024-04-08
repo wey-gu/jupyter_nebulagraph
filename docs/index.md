@@ -19,7 +19,7 @@ Your browser does not support the video tag.
 
 ## Get Started
 
-For a more comprehensive guide on how to get started with `jupyter_nebulagraph`, please refer to the [Get Started Guide](/get_started). This guide provides step-by-step instructions on installation, connecting to NebulaGraph, making queries, and visualizing query results, making it easier for new users to get up and running.
+For a more comprehensive guide on how to get started with `jupyter_nebulagraph`, please refer to the [Get Started Guide](/get_started_docs). This guide provides step-by-step instructions on installation, connecting to NebulaGraph, making queries, and visualizing query results, making it easier for new users to get up and running.
 
 ## Features
 
