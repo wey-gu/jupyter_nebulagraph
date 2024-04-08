@@ -7,6 +7,9 @@ plugins:
   - redirects:
       redirect_maps:
         "get_started.md": "get_started_docs.ipynb"
+  - search
+  - social:
+      cards_layout: default
 
 nav:
   - Home:
@@ -76,3 +79,12 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/wey-gu/jupyter_nebulagraph
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/weygu/jupyter_nebulagraph
+
+copyright: Copyright &copy; 2021-2024, NebulaGraph Community
