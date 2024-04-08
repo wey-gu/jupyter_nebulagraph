@@ -1,7 +1,12 @@
 site_name: NebulaGraph Jupyter Extension
 
 plugins:
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
+      execute: false
+  - redirects:
+      redirect_maps:
+        "get_started.md": "get_started_docs.ipynb"
+
 
 nav:
   - Home:
