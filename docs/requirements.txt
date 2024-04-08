@@ -1,3 +1,4 @@
 mkdocs
 mkdocs-jupyter
 mkdocs-redirects==1.2.1
+mkdocs-material[imaging]

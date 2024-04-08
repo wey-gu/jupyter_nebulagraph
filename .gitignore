@@ -10,3 +10,6 @@ examples/*.html
 
 # macOS
 .DS_Store
+
+# mkdocs
+.cache
