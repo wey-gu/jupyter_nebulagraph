@@ -20,6 +20,7 @@ from traitlets import Bool, Int, Unicode
 from nebula3.data.DataObject import Node, Relationship, PathWrapper
 from nebula3.gclient.net import ConnectionPool as NebulaConnectionPool
 from nebula3.Config import Config as NebulaConfig
+from nebula3.Config import SSL_config
 
 
 rel_query_sample_edge = Template(
@@ -164,9 +165,19 @@ class IPythonNGQL(Magics, Configurable):
                     config.max_connection_pool_size = self.max_connection_pool_size
 
                 self.credential = args.user, args.password
-                connect_init_result = connection_pool.init(
-                    [(args.address, args.port)], config
-                )
+                try:
+                    connect_init_result = connection_pool.init(
+                        [(args.address, args.port)], config
+                    )
+                except RuntimeError:
+                    # When GraphD is over TLS
+                    print(
+                        "Got RuntimeError, trying to connect assuming GraphD is over TLS"
+                    )
+                    ssl_config = SSL_config()
+                    connect_init_result = connection_pool.init(
+                        [(args.address, args.port)], config, ssl_config
+                    )
                 if not connect_init_result:
                     return CONNECTION_POOL_INIT_FAILURE
                 else:
