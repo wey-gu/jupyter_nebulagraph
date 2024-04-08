@@ -3,10 +3,10 @@ site_name: NebulaGraph Jupyter Extension
 plugins:
   - mkdocs-jupyter:
       execute: false
+      include_source: true
   - redirects:
       redirect_maps:
         "get_started.md": "get_started_docs.ipynb"
-
 
 nav:
   - Home:
@@ -32,14 +32,13 @@ nav:
   - Get Started: get_started_docs.ipynb
   - Try on Colab: https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb
 
-
 repo_url: https://github.com/wey-gu/jupyter_nebulagraph
 repo_name: jupyter_nebulagraph
-
 
 theme:
   favicon: images/favicon.png
   name: material
+  custom_dir: docs/overrides
   palette:
     primary: white
     accent: white
