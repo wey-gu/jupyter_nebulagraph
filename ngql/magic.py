@@ -883,7 +883,11 @@ class IPythonNGQL(Magics, Configurable):
                 range(0, len(vertex_data), batch_size), desc="Loading Vertices"
             ):
                 batch = vertex_data.iloc[i : i + batch_size]
-                query = f"INSERT VERTEX {args.tag} ({', '.join([col for col in vertex_data.columns if col != '___vid'])}) VALUES "
+                prop_columns = [col for col in vertex_data.columns if col != "___vid"]
+                if len(vertex_data.columns) == 1:
+                    query = f"INSERT VERTEX `{args.tag}` () VALUES "
+                else:
+                    query = f"INSERT VERTEX `{args.tag}` (`{'`, `'.join(prop_columns)}`) VALUES "
                 for index, row in batch.iterrows():
                     vid_str = f'{QUOTE_VID}{row["___vid"]}{QUOTE_VID}'
                     prop_str = ""
@@ -925,7 +929,15 @@ class IPythonNGQL(Magics, Configurable):
 
             for i in tqdm(range(0, len(edge_data), batch_size), desc="Loading Edges"):
                 batch = edge_data.iloc[i : i + batch_size]
-                query = f"INSERT EDGE {args.edge} ({', '.join([col for col in edge_data.columns if col not in ['___src', '___dst', '___rank']])}) VALUES "
+                prop_columns = [
+                    col
+                    for col in edge_data.columns
+                    if col not in ["___src", "___dst", "___rank"]
+                ]
+                if len(prop_columns) == 0:
+                    query = f"INSERT EDGE `{args.edge}` () VALUES "
+                else:
+                    query = f"INSERT EDGE `{args.edge}` (`{'`, `'.join(prop_columns)}`) VALUES "
                 for index, row in batch.iterrows():
                     src_str = f'{QUOTE_VID}{row["___src"]}{QUOTE_VID}'
                     dst_str = f'{QUOTE_VID}{row["___dst"]}{QUOTE_VID}'
