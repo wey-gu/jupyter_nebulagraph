@@ -676,6 +676,13 @@ class IPythonNGQL(Magics, Configurable):
     @argument("--dst", type=int, help="Destination vertex ID column index")
     @argument("--rank", type=int, help="Rank column index", default=None)
     @argument(
+        "-l",
+        "--limit",
+        type=int,
+        help="Sample maximum n lines of the CSV file",
+        default=-1,
+    )
+    @argument(
         "--props",
         type=str,
         help="Property mapping, comma-separated column indexes",
@@ -750,13 +757,28 @@ class IPythonNGQL(Magics, Configurable):
         # If with header
         with_header = args.header
 
+        limit = args.limit
+
+        # Function to safely load CSV with limit
+        def safe_load_csv(source, header_option, limit=None):
+            temp_df = pd.read_csv(source, header=header_option)
+            if isinstance(limit, int) and limit > 0:
+                return temp_df.head(limit)
+            return temp_df
+
         # Load CSV from file or URL
         if args.source.startswith("http://") or args.source.startswith("https://"):
             response = requests.get(args.source)
             csv_string = response.content.decode("utf-8")
-            df = pd.read_csv(StringIO(csv_string), header=0 if with_header else None)
+            df = safe_load_csv(
+                StringIO(csv_string),
+                header_option=0 if with_header else None,
+                limit=limit,
+            )
         else:
-            df = pd.read_csv(args.source, header=0 if with_header else None)
+            df = safe_load_csv(
+                args.source, header_option=0 if with_header else None, limit=limit
+            )
 
         # Build schema type map for tag or edge type
         prop_schema_map = {}
@@ -836,9 +858,10 @@ class IPythonNGQL(Magics, Configurable):
                 raise ValueError("Missing required argument: --vid for vertex ID")
             # Process properties mapping
             vertex_data_columns = ["___vid"] + [
-                props_mapping[i] for i in range(len(df.columns)) if i in props_mapping
+                props_mapping[i] for i in sorted(props_mapping)
             ]
-            vertex_data = df.iloc[:, [args.vid] + list(props_mapping.keys())]
+            vertex_data_indices = [args.vid] + sorted(props_mapping.keys())
+            vertex_data = df.iloc[:, vertex_data_indices]
             vertex_data.columns = vertex_data_columns
             # Here you would load vertex_data into NebulaGraph under the specified tag and space
             print(
@@ -851,12 +874,12 @@ class IPythonNGQL(Magics, Configurable):
                 )
             # Process properties mapping
             edge_data_columns = ["___src", "___dst"] + [
-                props_mapping[i] for i in range(len(df.columns)) if i in props_mapping
+                props_mapping[key] for key in sorted(props_mapping)
             ]
-            edge_data_indices = [args.src, args.dst] + list(props_mapping.keys())
+            edge_data_indices = [args.src, args.dst] + sorted(props_mapping.keys())
             if with_rank:
-                edge_data_columns += ["___rank"]
-                edge_data_indices += [args.rank]
+                edge_data_columns.append("___rank")
+                edge_data_indices.append(args.rank)
             edge_data = df.iloc[:, edge_data_indices]
             edge_data.columns = edge_data_columns
             # Here you would load edge_data into NebulaGraph under the specified edge type and space
@@ -892,7 +915,7 @@ class IPythonNGQL(Magics, Configurable):
                     vid_str = f'{QUOTE_VID}{row["___vid"]}{QUOTE_VID}'
                     prop_str = ""
                     if with_props:
-                        for prop_name in props_mapping.values():
+                        for prop_name in prop_columns:
                             prop_value = row[prop_name]
                             if pd.isnull(prop_value):
                                 if not prop_schema_map[prop_name]["nullable"]:
@@ -951,7 +974,7 @@ class IPythonNGQL(Magics, Configurable):
                     dst_str = f'{QUOTE_VID}{row["___dst"]}{QUOTE_VID}'
                     prop_str = ""
                     if with_props:
-                        for prop_name in props_mapping.values():
+                        for prop_name in prop_columns:
                             prop_value = row[prop_name]
                             if pd.isnull(prop_value):
                                 if not prop_schema_map[prop_name]["nullable"]:
@@ -962,6 +985,14 @@ class IPythonNGQL(Magics, Configurable):
                                 prop_str += "NULL, "
                             elif prop_schema_map[prop_name]["type"] == "string":
                                 prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            elif prop_schema_map[prop_name]["type"] == "date":
+                                prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "datetime":
+                                prop_str += f"datetime({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "time":
+                                prop_str += f"time({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "timestamp":
+                                prop_str += f"timestamp({QUOTE}{prop_value}{QUOTE}), "
                             else:
                                 prop_str += f"{prop_value}, "
                         prop_str = prop_str[:-2]
