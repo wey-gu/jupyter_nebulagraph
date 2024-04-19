@@ -903,6 +903,14 @@ class IPythonNGQL(Magics, Configurable):
                                 prop_str += "NULL, "
                             elif prop_schema_map[prop_name]["type"] == "string":
                                 prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            elif prop_schema_map[prop_name]["type"] == "date":
+                                prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "datetime":
+                                prop_str += f"datetime({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "time":
+                                prop_str += f"time({QUOTE}{prop_value}{QUOTE}), "
+                            elif prop_schema_map[prop_name]["type"] == "timestamp":
+                                prop_str += f"timestamp({QUOTE}{prop_value}{QUOTE}), "
                             else:
                                 prop_str += f"{prop_value}, "
                         prop_str = prop_str[:-2]
