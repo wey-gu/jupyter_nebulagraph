@@ -32,7 +32,7 @@ Some other examples:
 ### Usage
 
 ```
-%ng_load --source <source> [--header] --space <space> [--tag <tag>] [--vid <vid>] [--edge <edge>] [--src <src>] [--dst <dst>] [--rank <rank>] [--props <props>] [-b <batch>]
+%ng_load --source <source> [--header] --space <space> [--tag <tag>] [--vid <vid>] [--edge <edge>] [--src <src>] [--dst <dst>] [--rank <rank>] [--props <props>] [-b <batch>] [--limit <limit>]
 ```
 
 ### Arguments
@@ -50,3 +50,4 @@ Some other examples:
 | `--rank` | Optional | The column index for the rank value of edges. Default is None. |
 | `--props` | Optional | Comma-separated column indexes for mapping to properties. The format for mapping is column_index:property_name. |
 | `-b`, `--batch` | Optional | Batch size for data loading. Default is 256. |
+| `--limit` | Optional | The maximum number of rows to load. Default is -1(unlimited). |
