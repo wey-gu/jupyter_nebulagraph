@@ -4,18 +4,45 @@ It's supported to load data from a CSV file into NebulaGraph with the help of `n
 
 ### Examples
 
-For example, to load data from a CSV file `actor.csv` into a space `basketballplayer` with tag `player` and vid in column `0`, and props in column `1` and `2`:
+For example, to load data from a CSV file actor.csv into a space basketballplayer with tag player and vid in column 0, and props in column 1 and 2:
 
 ```csv
+player_id,name,age
 "player999","Tom Hanks",30
 "player1000","Tom Cruise",40
 "player1001","Jimmy X",33
 ```
 
-Just run the below line:
+Then the `%ng_load` line would be:
 
-```python
-%ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer
+```ascii
+%ng_load --header --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer
+         ────┬─── ────┬───────────── ─────┬────── ───┬─── ─────────┬────────── ────────────┬───────────
+             │        │                   │          │             │                       │           
+             │        │                   │          │             │                       │           
+             │        │                   │          │             │                       │           
+             │        │                   │          │             │                       │           
+             │        │                   │          │             │                       │           
+             │        │                   │          │             │                       │           
+             │        │  ┌────────────────┘          │             │                 ┌────────────────┐
+             │        │  │                           │             │                 │Graph Space Name│
+             │        │  │            ┌──────────────┘             │                 └────────────────┘
+             │        │  │            │    ┌──────────────────────────────────────────────────────────┐
+             │        │  │            │    │Properties on <column_index>:<prop_name> if there are any.│
+             │        │  │            │    └──────────────────────────────────────────────────────────┘
+             │        │  │   ┌────────┴───────────────────────────────────────────────────────────────┐
+             │        │  │   │                              For tag, there will be column index of VID│
+             │        │  │   │ For edge, there will be src/dst VID index, or optionally the rank index│
+             │        │  │   └────────────────────────────────────────────────────────────────────────┘
+             │        │  │                                                    ┌───────────────────────┐
+             │        │  └────────────────────────────────────────────────────┤vertex tag or edge type│
+             │        │                                                       └───────────────────────┘
+             │        │                                                  ┌────────────────────────────┐
+             │        └──────────────────────────────────────────────────┤File to parse, a path or URL│
+             │                                                           └────────────────────────────┘
+             │                                                         ┌──────────────────────────────┐
+             └─────────────────────────────────────────────────────────┤With Header in Row:0, Optional│
+                                                                       └──────────────────────────────┘
 ```
 
 Some other examples:
