@@ -21,7 +21,7 @@ from nebula3.gclient.net import ConnectionPool as NebulaConnectionPool
 from nebula3.Config import Config as NebulaConfig
 from nebula3.Config import SSL_config
 
-from ngql.session_wrapper import NebulaSessionWrapper
+from ngql.ng_load import ng_load
 from ngql.types import LoadDataArgsModel
 
 
@@ -717,9 +717,6 @@ class IPythonNGQL(Magics, Configurable):
             return
 
         args = parse_argstring(self.ng_load, line)
-        cli = NebulaSessionWrapper.from_conn_pool(
-            self.connection_pool,
-            user_name=self.credential[0],
-            password=self.credential[1],
+        ng_load(
+            self._execute, LoadDataArgsModel.model_validate(args, from_attributes=True)
         )
-        cli.ng_load(LoadDataArgsModel.model_validate(args, from_attributes=True))
