@@ -7,7 +7,7 @@ class LoadDataArgsModel(BaseModel):
     space: str
     # Args to load data
     batch: int = 100
-    header: bool = True
+    header: bool = False
     limit: Optional[int] = None
     # Args of data mapping
     tag: Optional[str] = None
