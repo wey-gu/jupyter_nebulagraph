@@ -1,5 +1,7 @@
 Jinja2
-nebula3-python>=3.5.0
+nebula3-python>=3.5.1
 pandas
 tqdm
 pyvis
+requests
+pydantic
