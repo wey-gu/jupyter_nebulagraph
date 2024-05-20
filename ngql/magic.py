@@ -604,9 +604,8 @@ class IPythonNGQL(Magics, Configurable):
 
             # networkx
             if len(tags) > 1:
-                g_nx.add_node(node_id, type=tags[0], **props)
-            else:
-                g_nx.add_node(node_id, **props)
+                props["__tags__"] = ",".join(tags)
+            g_nx.add_node(node_id, **props)
         elif isinstance(item, Relationship):
             src_id = str(item.start_vertex_id().cast())
             dst_id = str(item.end_vertex_id().cast())
