@@ -616,7 +616,8 @@ class IPythonNGQL(Magics, Configurable):
                 k: str(v.cast()) if hasattr(v, "cast") else str(v)
                 for k, v in props_raw.items()
             }
-            props.update({"rank": rank})
+            if rank != 0:
+                props.update({"rank": rank})
             # ensure start and end vertex exist in graph
             if not src_id in g.node_ids:
                 g.add_node(
