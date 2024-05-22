@@ -264,13 +264,22 @@ class IPythonNGQL(Magics, Configurable):
             except ImportError:
                 raise ImportError("Please install pandas to use STYLE_PANDAS")
 
+            pd.set_option("display.max_columns", None)
+            pd.set_option("display.max_colwidth", None)
+            pd.set_option("display.max_rows", 300)
+            pd.set_option("display.expand_frame_repr", False)
+
             columns = result.keys()
             d: Dict[str, list] = {}
             for col_num in range(result.col_size()):
                 col_name = columns[col_num]
                 col_list = result.column_values(col_name)
                 d[col_name] = [x.cast() for x in col_list]
-            return pd.DataFrame(d)
+            df = pd.DataFrame(d)
+            df.style.set_table_styles(
+                [{"selector": "table", "props": [("overflow-x", "scroll")]}]
+            )
+            return df
         elif self.ngql_result_style == STYLE_RAW:
             return result
         else:

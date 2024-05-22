@@ -13,3 +13,6 @@ examples/*.html
 
 # mkdocs
 .cache
+
+# python
+.venv
