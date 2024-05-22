@@ -25,7 +25,7 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         "Jinja2",
-        "nebula3-python>=3.5.1",
+        "nebula3-python>=3.8.0",
         "pandas",
         "tqdm",
         "pyvis",
