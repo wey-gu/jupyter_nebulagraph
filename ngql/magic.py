@@ -28,7 +28,7 @@ from ngql.types import LoadDataArgsModel
 rel_query_sample_edge = Template(
     """
 MATCH ()-[e:`{{ edge_type }}`]->()
-RETURN [src(e), dst(e)] AS sample_edge LIMIT 1
+RETURN [src(e), dst(e)] AS sample_edge LIMIT 10
 """
 )
 
