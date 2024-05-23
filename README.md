@@ -15,18 +15,42 @@ https://github.com/wey-gu/jupyter_nebulagraph/assets/1651790/10135264-77b5-4d3c-
 
 ## Getting Started
 
-Explore the capabilities of `jupyter_nebulagraph` by trying it on [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb), and the equivalent Jupyter Notebook is available in Docs [here](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/).
+```bash
+pip install jupyter_nebulagraph
+```
 
-For a comprehensive guide, visit the [official documentation](https://jupyter-nebulagraph.readthedocs.io/).
+Load the extension in Jupyter Notebook or iPython:
+
+```python
+%load_ext ngql
+%ngql --address 127.0.0.1 --port 9669 --user root --password nebula
+```
+
+Make queries:
+
+```python
+%ngql USE basketballplayer;
+%ngql MATCH p=(v:player)-->(v2:player) WHERE id(v) == "player100" RETURN p;
+```
+
+Draw the graph:
+
+```python
+%ng_draw
+```
+
+Discover the features of `jupyter_nebulagraph` by experimenting with it on [Google Colab](https://colab.research.google.com/github/wey-gu/jupyter_nebulagraph/blob/main/docs/get_started.ipynb). You can also access a similar Jupyter Notebook in the documentation [here](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/).
+
+For a detailed guide, refer to the [official documentation](https://jupyter-nebulagraph.readthedocs.io/en/stable).
 
 | Feature | Cheat Sheet | Example | Command Documentation |
 | ------- | ----------- | --------- | ---------------------- |
-| Connect | `%ngql --address 127.0.0.1 --port 9669 --user user --password password` | [Connect](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/#connect-to-nebulagraph) | [`%ngql`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ngql/#connect-to-nebulagraph) |
-| Load Data from CSV | `%ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer` | [Load Data](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/#load-data-from-csv) | [`%ng_load`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_load/) |
-| Query Execution | `%ngql MATCH p=(v:player{name:"Tim Duncan"})-->(v2:player) RETURN p;`| [Query Execution](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/#query) | [`%ngql` or `%%ngql`(multi-line)](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ngql/#make-queries) |
-| Result Visualization | `%ng_draw` | [Draw Graph](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw/) | [`%ng_draw`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw/) |
-| Draw Schema | `%ng_draw_schema` | [Draw Schema](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw_schema/) | [`%ng_draw_schema`](https://jupyter-nebulagraph.readthedocs.io/en/latest/magic_words/ng_draw_schema/) |
-| Tweak Query Result | `df = _` to get last query result as `pd.dataframe` or [`ResultSet`](https://github.com/vesoft-inc/nebula-python/blob/master/nebula3/data/ResultSet.py) | [Tweak Result](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/#result-handling) | [Configure `ngql_result_style`](https://jupyter-nebulagraph.readthedocs.io/en/latest/configurations/#configure-ngql_result_style) |
+| Connect | `%ngql --address 127.0.0.1 --port 9669 --user user --password password` | [Connect](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/#connect-to-nebulagraph) | [`%ngql`](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ngql/#connect-to-nebulagraph) |
+| Load Data from CSV | `%ng_load --source actor.csv --tag player --vid 0 --props 1:name,2:age --space basketballplayer` | [Load Data](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/#load-data-from-csv) | [`%ng_load`](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ng_load/) |
+| Query Execution | `%ngql MATCH p=(v:player{name:"Tim Duncan"})-->(v2:player) RETURN p;`| [Query Execution](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/#query) | [`%ngql` or `%%ngql`(multi-line)](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ngql/#make-queries) |
+| Result Visualization | `%ng_draw` | [Draw Graph](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ng_draw/) | [`%ng_draw`](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ng_draw/) |
+| Draw Schema | `%ng_draw_schema` | [Draw Schema](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ng_draw_schema/) | [`%ng_draw_schema`](https://jupyter-nebulagraph.readthedocs.io/en/stable/magic_words/ng_draw_schema/) |
+| Tweak Query Result | `df = _` to get last query result as `pd.dataframe` or [`ResultSet`](https://github.com/vesoft-inc/nebula-python/blob/master/nebula3/data/ResultSet.py) | [Tweak Result](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/#result-handling) | [Configure `ngql_result_style`](https://jupyter-nebulagraph.readthedocs.io/en/stable/configurations/#configure-ngql_result_style) |
 
 
 <details>
