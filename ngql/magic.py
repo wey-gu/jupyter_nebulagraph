@@ -81,6 +81,10 @@ def get_color(input_str):
     return COLORS[hash_val % len(COLORS)]
 
 
+def is_human_readable(field):
+    return any(c.isalpha() for c in field) and len(field) < 20
+
+
 @magics_class
 class IPythonNGQL(Magics, Configurable):
     ngql_verbose = Bool(False, config=True, help="Set verbose mode")
@@ -404,6 +408,18 @@ class IPythonNGQL(Magics, Configurable):
             for item in row:
                 self.render_pd_item(g, g_nx, item)
 
+        try:
+            # Calculate PageRank
+            pagerank_scores = nx.pagerank(g_nx)
+
+            # Update node sizes based on PageRank scores
+            for node_id, score in pagerank_scores.items():
+                g.get_node(node_id)["size"] = (
+                    10 + score * 130
+                )  # Normalized size for visibility
+        except Exception as e:
+            print(f"[WARN]: failed to calculate PageRank\n { e }")
+
         g.repulsion(
             node_distance=90,
             central_gravity=0.2,
@@ -412,20 +428,22 @@ class IPythonNGQL(Magics, Configurable):
             damping=0.09,
         )
         # g.show_buttons(filter_='physics')
-        # return g.show("nebulagraph_draw.html", notebook=True)
-        g_html_string = g.generate_html("nebulagraph.html")
-        with open("nebulagraph.html", "w", encoding="utf-8") as f:
+        # return g.show("nebulagraph.html", notebook=True)
+        cell_num = get_ipython().execution_count
+        graph_render_filename = f"nebulagraph_cell_{cell_num}.html"
+        g_html_string = g.generate_html(graph_render_filename)
+        with open(graph_render_filename, "w", encoding="utf-8") as f:
             f.write(g_html_string)
         # detect if we are in colab or not
         try:
             if "google.colab" in str(get_ipython()):
                 display(HTML(g_html_string))
             else:
-                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
+                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
         except Exception as e:
             print(f"[WARN]: failed to display the graph\n { e }")
             try:
-                display(IFrame(src="nebulagraph.html", width="100%", height="500px"))
+                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
 
@@ -549,8 +567,25 @@ class IPythonNGQL(Magics, Configurable):
                 edge_schema["dst_tag"],
                 edge_schema["edge_type"],
             )
-            g.add_edge(src_tag, dst_tag, label=edge_type, title=str(edge_schema))
+            title = (
+                "{\n  "
+                + "\n  ".join([f"{k}: {v}" for k, v in edge_schema.items()])
+                + "\n}"
+            )
+            g.add_edge(src_tag, dst_tag, label=edge_type, title=title)
             g_nx.add_edge(src_tag, dst_tag, **edge_schema)
+
+        try:
+            # Calculate PageRank
+            pagerank_scores = nx.pagerank(g_nx)
+
+            # Update node sizes based on PageRank scores
+            for node_id, score in pagerank_scores.items():
+                g.get_node(node_id)["size"] = (
+                    10 + score * 130
+                )  # Normalized size for visibility
+        except Exception as e:
+            print(f"[WARN]: failed to calculate PageRank\n { e }")
 
         g.repulsion(
             node_distance=90,
@@ -561,23 +596,21 @@ class IPythonNGQL(Magics, Configurable):
         )
         # g.show_buttons(filter_='physics')
         # return g.show("nebulagraph_draw.html", notebook=True)
-        g_html_string = g.generate_html("nebulagraph_schema.html")
-        with open("nebulagraph_schema.html", "w", encoding="utf-8") as f:
+        cell_num = get_ipython().execution_count
+        schema_html_filename = f"nebulagraph_schema_cell_{cell_num}_{space}.html"
+        g_html_string = g.generate_html(schema_html_filename)
+        with open(schema_html_filename, "w", encoding="utf-8") as f:
             f.write(g_html_string)
         # detect if we are in colab or not
         try:
             if "google.colab" in str(get_ipython()):
                 display(HTML(g_html_string))
             else:
-                display(
-                    IFrame(src="nebulagraph_schema.html", width="100%", height="500px")
-                )
+                display(IFrame(src=schema_html_filename, width="100%", height="500px"))
         except Exception as e:
             print(f"[WARN]: failed to display the graph\n { e }")
             try:
-                display(
-                    IFrame(src="nebulagraph_schema.html", width="100%", height="500px")
-                )
+                display(IFrame(src=schema_html_filename, width="100%", height="500px"))
             except Exception as e:
                 print(f"[WARN]: failed to display the graph\n { e }")
 
@@ -590,6 +623,7 @@ class IPythonNGQL(Magics, Configurable):
         if isinstance(item, Node):
             node_id = str(item.get_id().cast())
             tags = item.tags()  # list of strings
+            tags_str = tags[0] if len(tags) == 1 else ",".join(tags)
             props_raw = dict()
             for tag in tags:
                 props_raw.update(item.properties(tag))
@@ -597,19 +631,28 @@ class IPythonNGQL(Magics, Configurable):
                 k: str(v.cast()) if hasattr(v, "cast") else str(v)
                 for k, v in props_raw.items()
             }
+            # populating empty and null properties
+            props = {
+                k: v for k, v in props.items() if v not in ["__NULL__", "__EMPTY__"]
+            }
 
             if "name" in props:
                 label = props["name"]
             else:
-                label = f"tag: {tags}, id: {node_id}"
+                if is_human_readable(node_id):
+                    label = f"tag: {tags_str},\nid: {node_id}"
+                else:
+                    label = f"tag: {tags_str},\nid: {node_id[:3]}..{node_id[-3:]}"
                 for k in props:
                     if "name" in str(k).lower():
                         label = props[k]
                         break
+
             if "id" not in props:
                 props["id"] = node_id
+            title = "\n".join([f"{k}: {v}" for k, v in props.items()])
 
-            g.add_node(node_id, label=label, title=str(props), color=get_color(node_id))
+            g.add_node(node_id, label=label, title=title, color=get_color(node_id))
 
             # networkx
             if len(tags) > 1:
@@ -627,19 +670,33 @@ class IPythonNGQL(Magics, Configurable):
             }
             if rank != 0:
                 props.update({"rank": rank})
+            # populating empty and null properties
+            props = {
+                k: v for k, v in props.items() if v not in ["__NULL__", "__EMPTY__"]
+            }
             # ensure start and end vertex exist in graph
             if not src_id in g.node_ids:
+                label = (
+                    f"tag: {src_id[:3]}..{src_id[-3:]}"
+                    if not is_human_readable(src_id)
+                    else src_id
+                )
                 g.add_node(
                     src_id,
-                    label=str(src_id),
-                    title=str(src_id),
+                    label=label,
+                    title=src_id,
                     color=get_color(src_id),
                 )
             if not dst_id in g.node_ids:
+                label = (
+                    f"tag: {dst_id[:3]}..{dst_id[-3:]}"
+                    if not is_human_readable(dst_id)
+                    else dst_id
+                )
                 g.add_node(
                     dst_id,
-                    label=str(dst_id),
-                    title=str(dst_id),
+                    label=label,
+                    title=dst_id,
                     color=get_color(dst_id),
                 )
             props_str_list: List[str] = []
@@ -650,11 +707,19 @@ class IPythonNGQL(Magics, Configurable):
             props_str = "\n".join(props_str_list)
 
             label = f"{props_str}\n{edge_name}" if props else edge_name
+            if props:
+                title = (
+                    "{\n  "
+                    + "\n  ".join([f"{k}: {v}" for k, v in props.items()])
+                    + "\n}"
+                )
+            else:
+                title = edge_name
             g.add_edge(
                 src_id,
                 dst_id,
                 label=label,
-                title=str(props),
+                title=title,
                 weight=props.get("rank", 0),
             )
             # networkx
