@@ -336,11 +336,15 @@ class IPythonNGQL(Magics, Configurable):
         name = "nba"
         %ngql USE "{{ name }}"
 
-        > Query and draw the graph
+        > Query and draw the graph of last executed query.
 
-        %ngql GET SUBGRAPH 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
+        %ngql GET SUBGRAPH WITH PROP 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
 
         %ng_draw
+
+        Or draw a Query
+
+        %ng_draw GET SUBGRAPH WITH PROP 2 STEPS FROM "player101" YIELD VERTICES AS nodes, EDGES AS relationships;
 
         > Query and draw the graph schema
 
