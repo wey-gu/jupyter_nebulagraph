@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ipython-ngql",
-    version="0.12.4",
+    version="0.13.0",
     author="Wey Gu",
     author_email="weyl.gu@gmail.com",
     description="Jupyter extension for NebulaGraph",
@@ -31,5 +31,6 @@ setuptools.setup(
         "pyvis",
         "requests",
         "pydantic",
+        "scipy",
     ],
 )

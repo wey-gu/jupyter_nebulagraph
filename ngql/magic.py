@@ -8,7 +8,7 @@ from IPython.core.magic import (
 )
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 import networkx as nx
 
 
@@ -156,7 +156,14 @@ class IPythonNGQL(Magics, Configurable):
         else:  # We shouldn't reach here
             return f"Nothing triggerred, Connection State: { connection_state }"
 
-    def _init_connection_pool(self, args):
+    def _init_connection_pool(self, args: Optional[Any] = None):
+        if args is None:
+            return (
+                CONNECTION_POOL_EXISTED
+                if self.connection_pool is not None
+                else CONNECTION_POOL_NONE
+            )
+
         connection_info = (args.address, args.port, args.user, args.password)
         if any(connection_info):
             if not all(connection_info):
@@ -164,37 +171,35 @@ class IPythonNGQL(Magics, Configurable):
                     "One or more arguments missing: address, port, user, "
                     "password should None or all be provided."
                 )
-            else:  # all connection information ready
-                connection_pool = NebulaConnectionPool()
-                config = NebulaConfig()
-                if self.max_connection_pool_size:
-                    config.max_connection_pool_size = self.max_connection_pool_size
+            # all connection information ready
+            connection_pool = NebulaConnectionPool()
+            config = NebulaConfig()
+            if self.max_connection_pool_size:
+                config.max_connection_pool_size = self.max_connection_pool_size
 
-                self.credential = args.user, args.password
-                try:
-                    connect_init_result = connection_pool.init(
-                        [(args.address, args.port)], config
-                    )
-                except RuntimeError:
-                    # When GraphD is over TLS
-                    print(
-                        "Got RuntimeError, trying to connect assuming GraphD is over TLS"
-                    )
-                    ssl_config = SSL_config()
-                    connect_init_result = connection_pool.init(
-                        [(args.address, args.port)], config, ssl_config
-                    )
-                if not connect_init_result:
-                    return CONNECTION_POOL_INIT_FAILURE
-                else:
-                    self.connection_pool = connection_pool
-                    return CONNECTION_POOL_CREATED
-
-        # else a.k.a not any(connection_info)
-        if self.connection_pool is not None:
-            return CONNECTION_POOL_EXISTED
+            self.credential = args.user, args.password
+            try:
+                connect_init_result = connection_pool.init(
+                    [(args.address, args.port)], config
+                )
+            except RuntimeError:
+                # When GraphD is over TLS
+                print("Got RuntimeError, trying to connect assuming GraphD is over TLS")
+                ssl_config = SSL_config()
+                connect_init_result = connection_pool.init(
+                    [(args.address, args.port)], config, ssl_config
+                )
+            if not connect_init_result:
+                return CONNECTION_POOL_INIT_FAILURE
+            else:
+                self.connection_pool = connection_pool
+                return CONNECTION_POOL_CREATED
         else:
-            return CONNECTION_POOL_NONE
+            return (
+                CONNECTION_POOL_EXISTED
+                if self.connection_pool is not None
+                else CONNECTION_POOL_NONE
+            )
 
     def _render_cell_vars(self, cell, local_ns):
         if cell is not None:
@@ -261,8 +266,9 @@ class IPythonNGQL(Magics, Configurable):
         if last_space_used != "":
             self.space = last_space_used
 
-    def _stylized(self, result):
-        if self.ngql_result_style == STYLE_PANDAS:
+    def _stylized(self, result, style=None):
+        style = style or self.ngql_result_style
+        if style == STYLE_PANDAS:
             try:
                 import pandas as pd
             except ImportError:
@@ -284,10 +290,10 @@ class IPythonNGQL(Magics, Configurable):
                 [{"selector": "table", "props": [("overflow-x", "scroll")]}]
             )
             return df
-        elif self.ngql_result_style == STYLE_RAW:
+        elif style == STYLE_RAW:
             return result
         else:
-            raise ValueError("Unknown ngql_result_style")
+            raise ValueError(f"Unknown ngql_result_style: { style }")
 
     @staticmethod
     def _help_info():
@@ -382,15 +388,48 @@ class IPythonNGQL(Magics, Configurable):
 
         except ImportError:
             raise ImportError("Please install pyvis to draw the graph")
-        # when `%ngql foo`, varible_name is "foo", else it's "_"
-        variable_name = line.strip() or "_"
-        # Check if the last execution result is available in the local namespace
-        if variable_name not in local_ns:
-            return "No result found, please execute a query first."
-        result_df = local_ns[variable_name]
-        assert isinstance(
-            result_df, pd.DataFrame
-        ), "Result is not in Pandas DataFrame Style"
+        # when `%ng_draw foo`, varible_name is "foo", else it's "_"
+        arguments_line = line.strip()
+
+        if not arguments_line and not cell:
+            # No arguments and no cell content, draw the graph with the last execution result
+
+            variable_name = arguments_line or "_"
+            # Check if the last execution result is available in the local namespace
+            if variable_name not in local_ns:
+                return "No result found, please execute a query first."
+            result_df = local_ns[variable_name]
+
+            if not isinstance(result_df, pd.DataFrame):
+                try:
+                    result_df = self._stylized(result_df, style=STYLE_PANDAS)
+                except Exception as e:
+                    print(
+                        f"[ERROR]: the last execution result is not a %ngql query, make a query first "
+                        f"or use %ng_draw <some query> instead, please. Something wrong with the result "
+                        f"parsing: \n { e }"
+                    )
+
+        else:
+            # Arguments provided, execute the query and draw the graph
+
+            if line == "help":
+                return self._help_info()
+
+            cell = self._render_cell_vars(cell, local_ns)
+
+            # Replace "->" with ESCAPE_ARROW_STRING to avoid argument parsing issues
+            modified_line = line.replace("->", ESCAPE_ARROW_STRING)
+
+            connection_state = self._init_connection_pool()
+            if connection_state == CONNECTION_POOL_EXISTED:
+                # Restore "->" in the query before executing it
+                query = (
+                    modified_line.replace(ESCAPE_ARROW_STRING, "->")
+                    + "\n"
+                    + (cell if cell else "")
+                )
+                result_df = self._stylized(self._execute(query), style=STYLE_PANDAS)
 
         # Create a graph
         g = Network(
@@ -418,7 +457,9 @@ class IPythonNGQL(Magics, Configurable):
                     10 + score * 130
                 )  # Normalized size for visibility
         except Exception as e:
-            print(f"[WARN]: failed to calculate PageRank\n { e }")
+            print(
+                f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
+            )
 
         g.repulsion(
             node_distance=90,
@@ -585,7 +626,9 @@ class IPythonNGQL(Magics, Configurable):
                     10 + score * 130
                 )  # Normalized size for visibility
         except Exception as e:
-            print(f"[WARN]: failed to calculate PageRank\n { e }")
+            print(
+                f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
+            )
 
         g.repulsion(
             node_distance=90,
