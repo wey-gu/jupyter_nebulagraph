@@ -18,3 +18,5 @@ examples/*.html
 .venv
 .ipynb_checkpoints/
 Untitled.ipynb
+
+*.html
