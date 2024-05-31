@@ -1,5 +1,8 @@
 import logging
 
+import pprint
+from typing import Any, ClassVar, Dict, List, Optional
+
 from IPython.core.magic import (
     Magics,
     magics_class,
@@ -8,7 +11,7 @@ from IPython.core.magic import (
 )
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 
-from typing import Dict, List, Optional, Any
+
 import networkx as nx
 
 
@@ -85,6 +88,44 @@ def is_human_readable(field):
     return any(c.isalpha() for c in field) and len(field) < 20
 
 
+class FancyPrinter:
+    pp = pprint.PrettyPrinter(indent=2, sort_dicts=False)
+    # Thanks to https://www.learnui.design/tools/data-color-picker.html
+    COLORS_rgb: ClassVar[Dict[str, str]] = {
+        "dark_blue": "38;2;0;63;92",
+        "blue": "38;2;47;75;124",
+        "light_blue": "38;2;0;120;215",
+        "green": "38;2;0;135;107",
+        "light_green": "38;2;102;187;106",
+        "purple": "38;2;102;81;145",
+        "magenta": "38;2;160;81;149",
+        "pink": "38;2;212;80;135",
+        "red": "38;2;249;93;106",
+        "orange": "38;2;255;124;67",
+        "yellow": "38;2;255;166;0",
+    }
+
+    color_idx: int = 0
+
+    def __call__(self, val: Any, color: Optional[str] = None):
+        if color in self.COLORS_rgb:
+            self.color_idx = list(self.COLORS_rgb.keys()).index(color)
+            color = self.COLORS_rgb[color]
+        else:
+            self.color_idx += 1
+            self.color_idx %= len(self.COLORS_rgb)
+            color = list(self.COLORS_rgb.values())[self.color_idx]
+
+        if isinstance(val, str):
+            print(f"\033[1;3;{color}m{val}\033[0m")
+        else:
+            text = self.pp.pformat(val)
+            print(f"\033[1;3;{color}m{text}\033[0m")
+
+
+fancy_print = FancyPrinter()
+
+
 @magics_class
 class IPythonNGQL(Magics, Configurable):
     ngql_verbose = Bool(False, config=True, help="Set verbose mode")
@@ -136,12 +177,12 @@ class IPythonNGQL(Magics, Configurable):
 
         connection_state = self._init_connection_pool(args)
         if self.ngql_verbose:
-            print(f"[DEBUG] Connection State: { connection_state }")
+            fancy_print(f"[DEBUG] Connection State: { connection_state }")
         if connection_state < 0:
-            print("[ERROR] Connection is not ready")
+            fancy_print("[ERROR] Connection is not ready", color="pink")
             return f"Connection State: { connection_state }"
         if connection_state == CONNECTION_POOL_CREATED:
-            print("Connection Pool Created")
+            fancy_print("Connection Pool Created", color="blue")
             if not cell:
                 return self._stylized(self._show_spaces())
             else:
@@ -184,7 +225,10 @@ class IPythonNGQL(Magics, Configurable):
                 )
             except RuntimeError:
                 # When GraphD is over TLS
-                print("Got RuntimeError, trying to connect assuming GraphD is over TLS")
+                fancy_print(
+                    "[ERROR] Got RuntimeError, trying to connect assuming GraphD is over TLS",
+                    color="pink",
+                )
                 ssl_config = SSL_config()
                 connect_init_result = connection_pool.init(
                     [(args.address, args.port)], config, ssl_config
@@ -214,7 +258,7 @@ class IPythonNGQL(Magics, Configurable):
             cell_template = Template(cell)
             cell = cell_template.render(**cell_params)
             if self.ngql_verbose:
-                print(f"Query String:\n { cell }")
+                fancy_print(f"Query String:\n { cell }", color="blue")
         return cell
 
     def _get_session(self):
@@ -225,6 +269,11 @@ class IPythonNGQL(Magics, Configurable):
         # notebook, thus connection info shouldn't be revealed unless
         # explicitly specified
         logger.disabled = True
+        if self.connection_pool is None:
+            raise ValueError(
+                "Please connect to NebulaGraph first, i.e. \n"
+                "%ngql --address 127.0.0.1 --port 9669 --user root --password nebula"
+            )
         return self.connection_pool.get_session(*self.credential)
 
     def _show_spaces(self):
@@ -233,7 +282,7 @@ class IPythonNGQL(Magics, Configurable):
             result = session.execute("SHOW SPACES")
             self._auto_use_space(result=result)
         except Exception as e:
-            print(f"[ERROR]:\n { e }")
+            fancy_print(f"[ERROR]:\n { e }", color="red")
         finally:
             session.release()
         return result
@@ -244,7 +293,7 @@ class IPythonNGQL(Magics, Configurable):
             result = session.execute("SHOW SPACES;")
 
         if result.row_size() == 1:
-            self.space = result.row_values(0)[0].cast()
+            self.space = result.row_values(0)[0].cast_primitive()
 
     def _execute(self, query):
         session = self._get_session()
@@ -256,7 +305,7 @@ class IPythonNGQL(Magics, Configurable):
             assert result.is_succeeded(), f"Query Failed:\n { result.error_msg() }"
             self._remember_space(result)
         except Exception as e:
-            print(f"[ERROR]:\n { e }")
+            fancy_print(f"[ERROR]:\n { e }", color="red")
         finally:
             session.release()
         return result
@@ -371,7 +420,7 @@ class IPythonNGQL(Magics, Configurable):
 
 
         """
-        print(help_info)
+        fancy_print(help_info, color="green")
         return
 
     @needs_local_scope
@@ -408,10 +457,12 @@ class IPythonNGQL(Magics, Configurable):
                 try:
                     result_df = self._stylized(result_df, style=STYLE_PANDAS)
                 except Exception as e:
-                    print(
+                    fancy_print(
                         f"[ERROR]: the last execution result is not a %ngql query, make a query first "
                         f"or use %ng_draw <some query> instead, please. Something wrong with the result "
-                        f"parsing: \n { e }"
+                        f"parsing: \n { result_df }\n"
+                        f"Error: \n { e }",
+                        color="red",
                     )
 
         else:
@@ -516,7 +567,7 @@ class IPythonNGQL(Magics, Configurable):
 
         tags_schema, edge_types_schema, relationship_samples = [], [], []
         for tag in self._execute("SHOW TAGS").column_values("Name"):
-            tag_name = tag.cast()
+            tag_name = tag.cast_primitive()
             tag_schema = {"tag": tag_name, "properties": []}
             r = self._execute(f"DESCRIBE TAG `{tag_name}`")
             props, types, comments = (
@@ -527,14 +578,18 @@ class IPythonNGQL(Magics, Configurable):
             for i in range(r.row_size()):
                 # back compatible with old version of nebula-python
                 property_defination = (
-                    (props[i].cast(), types[i].cast())
+                    (props[i].cast_primitive(), types[i].cast_primitive())
                     if comments[i].is_empty()
-                    else (props[i].cast(), types[i].cast(), comments[i].cast())
+                    else (
+                        props[i].cast_primitive(),
+                        types[i].cast_primitive(),
+                        comments[i].cast_primitive(),
+                    )
                 )
                 tag_schema["properties"].append(property_defination)
             tags_schema.append(tag_schema)
         for edge_type in self._execute("SHOW EDGES").column_values("Name"):
-            edge_type_name = edge_type.cast()
+            edge_type_name = edge_type.cast_primitive()
             edge_schema = {"edge": edge_type_name, "properties": []}
             r = self._execute(f"DESCRIBE EDGE `{edge_type_name}`")
             props, types, comments = (
@@ -545,9 +600,13 @@ class IPythonNGQL(Magics, Configurable):
             for i in range(r.row_size()):
                 # back compatible with old version of nebula-python
                 property_defination = (
-                    (props[i].cast(), types[i].cast())
+                    (props[i].cast_primitive(), types[i].cast_primitive())
                     if comments[i].is_empty()
-                    else (props[i].cast(), types[i].cast(), comments[i].cast())
+                    else (
+                        props[i].cast_primitive(),
+                        types[i].cast_primitive(),
+                        comments[i].cast_primitive(),
+                    )
                 )
                 edge_schema["properties"].append(property_defination)
             edge_types_schema.append(edge_schema)
@@ -558,7 +617,7 @@ class IPythonNGQL(Magics, Configurable):
             ).column_values("sample_edge")
             if len(sample_edge) == 0:
                 continue
-            src_id, dst_id = sample_edge[0].cast()
+            src_id, dst_id = sample_edge[0].cast_primitive()
             r = self._execute(
                 rel_query_edge_type.render(
                     edge_type=edge_type_name, src_id=src_id, dst_id=dst_id
@@ -570,8 +629,8 @@ class IPythonNGQL(Magics, Configurable):
             ):
                 continue
             src_tag, dst_tag = (
-                r.column_values("src_tag")[0].cast(),
-                r.column_values("dst_tag")[0].cast(),
+                r.column_values("src_tag")[0].cast_primitive(),
+                r.column_values("dst_tag")[0].cast_primitive(),
             )
             relationship_samples.append(
                 {
@@ -580,6 +639,42 @@ class IPythonNGQL(Magics, Configurable):
                     "edge_type": edge_type_name,
                 }
             )
+
+        # In case there are edges not be sampled(no data yet), add them as different node with id edge_src and edge_dst:
+        for edge_schema in edge_types_schema:
+            edge_type = edge_schema["edge"]
+            if edge_type not in [r["edge_type"] for r in relationship_samples]:
+                src_dummy_tag = edge_type + "_src"
+                dst_dummy_tag = edge_type + "_dst"
+                relationship_samples.append(
+                    {
+                        "src_tag": src_dummy_tag,
+                        "dst_tag": dst_dummy_tag,
+                        "edge_type": edge_type,
+                    }
+                )
+                if src_dummy_tag not in [x["tag"] for x in tags_schema]:
+                    tags_schema.append({"tag": src_dummy_tag, "properties": []})
+                if dst_dummy_tag not in [x["tag"] for x in tags_schema]:
+                    tags_schema.append({"tag": dst_dummy_tag, "properties": []})
+
+        # In case there are None in relationship_samples, add placeholder node:
+        for edge_sample in relationship_samples:
+            edge_type = edge_sample["edge_type"]
+            if edge_sample["src_tag"] is None:
+                src_dummy_tag = edge_type + "_src"
+                edge_sample["src_tag"] = src_dummy_tag
+                if src_dummy_tag not in [x["tag"] for x in tags_schema]:
+                    tags_schema.append({"tag": src_dummy_tag, "properties": []})
+            if edge_sample["dst_tag"] is None:
+                dst_dummy_tag = edge_type + "_dst"
+                edge_sample["dst_tag"] = dst_dummy_tag
+                if dst_dummy_tag not in [x["tag"] for x in tags_schema]:
+                    tags_schema.append({"tag": dst_dummy_tag, "properties": []})
+
+        if not tags_schema and not edge_types_schema:
+            fancy_print("[WARN] No tags or edges found in the space", color="pink")
+            return
 
         # Create a graph of relationship_samples
         # The nodes are tags, with their properties schema as attributes
@@ -722,7 +817,7 @@ class IPythonNGQL(Magics, Configurable):
                 k: v for k, v in props.items() if v not in ["__NULL__", "__EMPTY__"]
             }
             # ensure start and end vertex exist in graph
-            if not src_id in g.node_ids:
+            if src_id not in g.node_ids:
                 label = (
                     f"tag: {src_id[:3]}..{src_id[-3:]}"
                     if not is_human_readable(src_id)
@@ -734,7 +829,7 @@ class IPythonNGQL(Magics, Configurable):
                     title=src_id,
                     color=get_color(src_id),
                 )
-            if not dst_id in g.node_ids:
+            if dst_id not in g.node_ids:
                 label = (
                     f"tag: {dst_id[:3]}..{dst_id[-3:]}"
                     if not is_human_readable(dst_id)
