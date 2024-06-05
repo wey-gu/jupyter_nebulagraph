@@ -23,6 +23,7 @@ from nebula3.data.DataObject import Node, Relationship, PathWrapper
 from nebula3.gclient.net import ConnectionPool as NebulaConnectionPool
 from nebula3.Config import Config as NebulaConfig
 from nebula3.Config import SSL_config
+from nebula3.data.ResultSet import ResultSet
 
 from ngql.ng_load import ng_load
 from ngql.types import LoadDataArgsModel
@@ -315,7 +316,7 @@ class IPythonNGQL(Magics, Configurable):
         if last_space_used != "":
             self.space = last_space_used
 
-    def _stylized(self, result, style=None):
+    def _stylized(self, result: ResultSet, style=None):
         style = style or self.ngql_result_style
         if style == STYLE_PANDAS:
             try:
@@ -423,6 +424,44 @@ class IPythonNGQL(Magics, Configurable):
         fancy_print(help_info, color="green")
         return
 
+    def _draw_graph(self, g: Any) -> Any:
+        try:
+            from IPython.display import display, IFrame, HTML
+
+            # import get_ipython
+            from IPython import get_ipython
+        except ImportError:
+            raise ImportError("Please install IPython to draw the graph")
+
+        g.repulsion(
+            node_distance=90,
+            central_gravity=0.2,
+            spring_length=200,
+            spring_strength=0.05,
+            damping=0.09,
+        )
+        # g.show_buttons(filter_='physics')
+        # return g.show("nebulagraph.html", notebook=True)
+        cell_num = get_ipython().execution_count
+        graph_render_filename = f"nebulagraph_cell_{cell_num}.html"
+        g_html_string = g.generate_html(graph_render_filename)
+        with open(graph_render_filename, "w", encoding="utf-8") as f:
+            f.write(g_html_string)
+        # detect if we are in colab or not
+        try:
+            if "google.colab" in str(get_ipython()):
+                display(HTML(g_html_string))
+            else:
+                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
+        except Exception as e:
+            print(f"[WARN]: failed to display the graph\n { e }")
+            try:
+                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
+            except Exception as e:
+                print(f"[WARN]: failed to display the graph\n { e }")
+
+        return g
+
     @needs_local_scope
     @line_cell_magic
     @magic_arguments()
@@ -434,10 +473,6 @@ class IPythonNGQL(Magics, Configurable):
         try:
             import pandas as pd
             from pyvis.network import Network
-            from IPython.display import display, IFrame, HTML
-
-            # import get_ipython
-            from IPython import get_ipython
 
         except ImportError:
             raise ImportError("Please install pyvis to draw the graph")
@@ -454,16 +489,20 @@ class IPythonNGQL(Magics, Configurable):
             result_df = local_ns[variable_name]
 
             if not isinstance(result_df, pd.DataFrame):
-                try:
+                if isinstance(result_df, ResultSet):
                     result_df = self._stylized(result_df, style=STYLE_PANDAS)
-                except Exception as e:
+                elif isinstance(result_df, Network):
+                    # A rerun of %ng_draw with the last execution result
+                    g = self._draw_graph(result_df)
+                    return g
+                else:
                     fancy_print(
-                        f"[ERROR]: the last execution result is not a %ngql query, make a query first "
-                        f"or use %ng_draw <some query> instead, please. Something wrong with the result "
-                        f"parsing: \n { result_df }\n"
-                        f"Error: \n { e }",
+                        "[ERROR]: No valid %ngql query result available. \n"
+                        "Please execute a valid query before using %ng_draw. \n"
+                        "Or pass a query as an argument to %ng_draw or %%ng_draw(multiline).",
                         color="red",
                     )
+                    return ""
 
         else:
             # Arguments provided, execute the query and draw the graph
@@ -516,32 +555,7 @@ class IPythonNGQL(Magics, Configurable):
                 f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
             )
 
-        g.repulsion(
-            node_distance=90,
-            central_gravity=0.2,
-            spring_length=200,
-            spring_strength=0.05,
-            damping=0.09,
-        )
-        # g.show_buttons(filter_='physics')
-        # return g.show("nebulagraph.html", notebook=True)
-        cell_num = get_ipython().execution_count
-        graph_render_filename = f"nebulagraph_cell_{cell_num}.html"
-        g_html_string = g.generate_html(graph_render_filename)
-        with open(graph_render_filename, "w", encoding="utf-8") as f:
-            f.write(g_html_string)
-        # detect if we are in colab or not
-        try:
-            if "google.colab" in str(get_ipython()):
-                display(HTML(g_html_string))
-            else:
-                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
-        except Exception as e:
-            print(f"[WARN]: failed to display the graph\n { e }")
-            try:
-                display(IFrame(src=graph_render_filename, width="100%", height="500px"))
-            except Exception as e:
-                print(f"[WARN]: failed to display the graph\n { e }")
+        g = self._draw_graph(g)
 
         return g
 
