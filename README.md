@@ -223,7 +223,7 @@ In [2]: df = _
 
 It's also configurable to have the result in raw ResultSet, to enable handy NebulaGraph Python App Development.
 
-See more via [Docs: Result Handling](https://jupyter-nebulagraph.readthedocs.io/en/latest/get_started_docs/#result-handling)
+See more via [Docs: Result Handling](https://jupyter-nebulagraph.readthedocs.io/en/stable/get_started_docs/#result-handling)
 
 ### CheatSheet
 
