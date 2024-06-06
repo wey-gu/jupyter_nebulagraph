@@ -454,11 +454,11 @@ class IPythonNGQL(Magics, Configurable):
             else:
                 display(IFrame(src=graph_render_filename, width="100%", height="500px"))
         except Exception as e:
-            print(f"[WARN]: failed to display the graph\n { e }")
+            fancy_print(f"[WARN]: failed to display the graph\n { e }")
             try:
                 display(IFrame(src=graph_render_filename, width="100%", height="500px"))
             except Exception as e:
-                print(f"[WARN]: failed to display the graph\n { e }")
+                fancy_print(f"[WARN]: failed to display the graph\n { e }")
 
         return g
 
@@ -551,7 +551,7 @@ class IPythonNGQL(Magics, Configurable):
                     10 + score * 130
                 )  # Normalized size for visibility
         except Exception as e:
-            print(
+            fancy_print(
                 f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
             )
 
@@ -739,7 +739,7 @@ class IPythonNGQL(Magics, Configurable):
                     10 + score * 130
                 )  # Normalized size for visibility
         except Exception as e:
-            print(
+            fancy_print(
                 f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
             )
 
@@ -764,11 +764,11 @@ class IPythonNGQL(Magics, Configurable):
             else:
                 display(IFrame(src=schema_html_filename, width="100%", height="500px"))
         except Exception as e:
-            print(f"[WARN]: failed to display the graph\n { e }")
+            fancy_print(f"[WARN]: failed to display the graph\n { e }")
             try:
                 display(IFrame(src=schema_html_filename, width="100%", height="500px"))
             except Exception as e:
-                print(f"[WARN]: failed to display the graph\n { e }")
+                fancy_print(f"[WARN]: failed to display the graph\n { e }")
 
         return g
 
@@ -940,8 +940,8 @@ class IPythonNGQL(Magics, Configurable):
         "player999","player1000",50,1
         """
         if self.connection_pool is None:
-            print(
-                "Please connect to NebulaGraph first using %ngql magic before using ng_load"
+            fancy_print(
+                "[WARN]: Please connect to NebulaGraph first using %ngql magic before using ng_load"
                 "\nExample: %ngql --address 127.0.0.1 --port 9669 --user root --password nebula"
             )
             return
