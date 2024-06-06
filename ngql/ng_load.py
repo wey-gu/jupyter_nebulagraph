@@ -326,7 +326,7 @@ if __name__ == "__main__":
         return LoadDataArgsModel.model_validate(kv)
 
     test = """
-# https://graph-hub.siwei.io/en/latest/datasets/shareholding
+# https://graph-hub.siwei.io/en/stable/datasets/shareholding
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/person.csv --tag person --vid 0 --props 1:name --space shareholding
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/corp.csv --tag corp --vid 0 --props 1:name --space shareholding
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/person_corp_role.csv --edge role_as --src 0 --dst 1 --props 2:role  --space shareholding
