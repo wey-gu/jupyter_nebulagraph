@@ -8,6 +8,8 @@ from nebula3.gclient.net import ConnectionPool
 from nebula3.Config import Config as NebulaConfig
 
 from ngql.types import LoadDataArgsModel
+from ngql.utils import FancyPrinter
+
 
 try:
     import IPython
@@ -18,6 +20,8 @@ try:
         from tqdm import tqdm
 except ImportError:
     from tqdm import tqdm
+
+fancy_print = FancyPrinter()
 
 
 def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
@@ -131,20 +135,22 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
     matched = True
     for i, prop in props_mapping.items():
         if prop not in prop_schema_map:
-            print(
-                f"Error: Property '{prop}' not found in schema for {DESC_TYPE} '{args.tag}'"
+            fancy_print(
+                f"[ERROR] Property '{prop}' not found in schema for {DESC_TYPE} '{args.tag}'",
+                "orange",
             )
             matched = False
     for prop in prop_schema_map:
         # For not nullable properties, check if they are in props_mapping
         if not prop_schema_map[prop]["nullable"] and prop not in props_mapping.values():
-            print(
-                f"Error: Property '{prop}' is not nullable and not found in property mapping"
+            fancy_print(
+                f"[ERROR] Property '{prop}' is not nullable and not found in property mapping",
+                "orange",
             )
             matched = False
 
     if not matched:
-        raise ValueError("Error: Property mapping does not match schema")
+        raise ValueError("[ERROR] Property mapping does not match schema")
 
     if args.rank is not None:
         with_rank = True
@@ -154,7 +160,7 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
     # Prepare data for loading
     if args.tag and not args.edge:
         if args.vid is None:
-            raise ValueError("Missing required argument: --vid for vertex ID")
+            raise ValueError("[ERROR] Missing required argument: --vid for vertex ID")
         # Process properties mapping
         vertex_data_columns = ["___vid"] + [
             props_mapping[i] for i in sorted(props_mapping)
@@ -163,13 +169,14 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
         vertex_data = df.iloc[:, vertex_data_indices]
         vertex_data.columns = vertex_data_columns
         # Here you would load vertex_data into NebulaGraph under the specified tag and space
-        print(
-            f"Parsed {len(vertex_data)} vertices '{space}' for tag '{args.tag}' in memory"
+        fancy_print(
+            f"[INFO] Parsed {len(vertex_data)} vertices '{space}' for tag '{args.tag}' in memory",
+            "light_blue",
         )
     elif args.edge and not args.tag:
         if args.src is None or args.dst is None:
             raise ValueError(
-                "Missing required arguments: --src and/or --dst for edge source and destination IDs"
+                "[ERROR] Missing required arguments: --src and/or --dst for edge source and destination IDs"
             )
         # Process properties mapping
         edge_data_columns = ["___src", "___dst"] + [
@@ -182,12 +189,13 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
         edge_data = df.iloc[:, edge_data_indices]
         edge_data.columns = edge_data_columns
         # Here you would load edge_data into NebulaGraph under the specified edge type and space
-        print(
-            f"Parsed {len(edge_data)} edges '{space}' for edge type '{args.edge}' in memory"
+        fancy_print(
+            f"[INFO] Parsed {len(edge_data)} edges '{space}' for edge type '{args.edge}' in memory",
+            "light_blue",
         )
     else:
         raise ValueError(
-            "Specify either --tag for vertex loading or --edge for edge loading, not both"
+            "[ERROR] Specify either --tag for vertex loading or --edge for edge loading, not both"
         )
 
     # Load data into NebulaGraph
@@ -242,8 +250,9 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                 raise Exception(f"INSERT Failed on row {i + index}, data: {row}") from e
             tqdm.write(f"Loaded {i + len(batch)} of {len(vertex_data)} vertices")
 
-        print(
-            f"Successfully loaded {len(vertex_data)} vertices '{space}' for tag '{args.tag}'"
+        fancy_print(
+            f"[INFO] Successfully loaded {len(vertex_data)} vertices '{space}' for tag '{args.tag}'",
+            "green",
         )
     elif args.edge:
         # Load edge_data into NebulaGraph under the specified edge type and space
@@ -303,8 +312,9 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
             except Exception as e:
                 raise Exception(f"INSERT Failed on row {i + index}, data: {row}") from e
             tqdm.write(f"Loaded {i + len(batch)} of {len(edge_data)} edges")
-        print(
-            f"Successfully loaded {len(edge_data)} edges '{space}' for edge type '{args.edge}'"
+        fancy_print(
+            f"[INFO] Successfully loaded {len(edge_data)} edges '{space}' for edge type '{args.edge}'",
+            "green",
         )
 
 
