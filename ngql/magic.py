@@ -502,9 +502,11 @@ class IPythonNGQL(Magics, Configurable):
             neighborhood_highlight=True,
         )
         g_nx = nx.MultiDiGraph()
+
+        edge_filter = set()
         for _, row in result_df.iterrows():
             for item in row:
-                self.render_pd_item(g, g_nx, item)
+                self.render_pd_item(g, g_nx, item, edge_filter)
 
         try:
             # Calculate PageRank
@@ -737,7 +739,7 @@ class IPythonNGQL(Magics, Configurable):
 
         return g
 
-    def render_pd_item(self, g, g_nx, item):
+    def render_pd_item(self, g, g_nx, item, edges_filter: set):
         # g is pyvis graph
         # g_nx is networkx graph
 
@@ -836,26 +838,31 @@ class IPythonNGQL(Magics, Configurable):
                 )
             else:
                 title = edge_name
-            g.add_edge(
-                src_id,
-                dst_id,
-                label=label,
-                title=title,
-                weight=props.get("rank", 0),
-            )
-            # networkx
-            props["edge_type"] = edge_name
-            g_nx.add_edge(src_id, dst_id, **props)
+            edge_key = f"{src_id}->{dst_id}@{rank}:{edge_name}"
+            if edge_key not in edges_filter:
+                # We don't have to ensure same policies for identical edges when adding to graph
+                # for PyVis and NetworkX, thus we maintain a set to filter out identical edges
+                g.add_edge(
+                    src_id,
+                    dst_id,
+                    label=label,
+                    title=title,
+                    weight=props.get("rank", 0),
+                )
+                # networkx
+                props["edge_type"] = edge_name
+                g_nx.add_edge(src_id, dst_id, **props)
+                edges_filter.add(edge_key)
 
         elif isinstance(item, PathWrapper):
             for node in item.nodes():
-                self.render_pd_item(g, g_nx, node)
+                self.render_pd_item(g, g_nx, node, edges_filter)
             for edge in item.relationships():
-                self.render_pd_item(g, g_nx, edge)
+                self.render_pd_item(g, g_nx, edge, edges_filter)
 
         elif isinstance(item, list):
             for it in item:
-                self.render_pd_item(g, g_nx, it)
+                self.render_pd_item(g, g_nx, it, edges_filter)
 
     @line_cell_magic
     @magic_arguments()
