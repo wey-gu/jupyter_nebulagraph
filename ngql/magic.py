@@ -514,9 +514,8 @@ class IPythonNGQL(Magics, Configurable):
 
             # Update node sizes based on PageRank scores
             for node_id, score in pagerank_scores.items():
-                g.get_node(node_id)["size"] = (
-                    10 + score * 130
-                )  # Normalized size for visibility
+                normalized_size = 10 + score * 90  # Reduced multiplier for smaller size normalization
+                g.get_node(node_id)["size"] = min(normalized_size, 80)
         except Exception as e:
             fancy_print(
                 f"[WARN]: failed to calculate PageRank, left graph node unsized. Reason:\n { e }"
