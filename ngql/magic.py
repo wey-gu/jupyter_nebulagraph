@@ -268,7 +268,9 @@ class IPythonNGQL(Magics, Configurable):
             if self.space is not None:  # Always use space automatically
                 session.execute(f"USE { self.space }")
             result = session.execute(query)
-            assert result.is_succeeded(), f"Query Failed:\n { result.error_msg() }"
+            assert (
+                result.is_succeeded()
+            ), f"Query Failed:\n { result.error_msg() }\n Query:\n { query }"
             self._remember_space(result)
         except Exception as e:
             fancy_print(f"[ERROR]:\n { e }", color="red")
@@ -514,7 +516,9 @@ class IPythonNGQL(Magics, Configurable):
 
             # Update node sizes based on PageRank scores
             for node_id, score in pagerank_scores.items():
-                normalized_size = 10 + score * 90  # Reduced multiplier for smaller size normalization
+                normalized_size = (
+                    10 + score * 90
+                )  # Reduced multiplier for smaller size normalization
                 g.get_node(node_id)["size"] = min(normalized_size, 80)
         except Exception as e:
             fancy_print(
