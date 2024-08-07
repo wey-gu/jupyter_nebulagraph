@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from io import StringIO
+from io import BytesIO, StringIO
 from typing import Callable
 
 from nebula3.data.ResultSet import ResultSet
@@ -69,25 +69,51 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
 
     limit = args.limit
 
-    # Function to safely load CSV with limit
-    def safe_load_csv(source, header_option, limit=None):
-        temp_df = pd.read_csv(source, header=header_option)
+    # Function to safely load CSV or Parquet with limit
+    def safe_load_file(source, file_type, header_option=None, limit=None):
+        if file_type == "csv":
+            temp_df = pd.read_csv(source, header=header_option)
+        elif file_type == "parquet":
+            temp_df = pd.read_parquet(source)
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
+
         if isinstance(limit, int) and limit > 0:
             return temp_df.head(limit)
         return temp_df
 
-    # Load CSV from file or URL
+    # Determine file type based on source extension
+    file_type = (
+        "csv"
+        if args.source.lower().endswith(".csv")
+        else "parquet"
+        if args.source.lower().endswith(".parquet")
+        else None
+    )
+    if file_type is None:
+        raise ValueError(
+            "Unsupported file type. Please use either CSV or Parquet files."
+        )
+
+    # Load file from URL or local path
     if args.source.startswith("http://") or args.source.startswith("https://"):
         response = requests.get(args.source)
-        csv_string = response.content.decode("utf-8")
-        df = safe_load_csv(
-            StringIO(csv_string),
+        if file_type == "csv":
+            file_content = StringIO(response.content.decode("utf-8"))
+        else:  # parquet
+            file_content = BytesIO(response.content)
+        df = safe_load_file(
+            file_content,
+            file_type,
             header_option=0 if with_header else None,
             limit=limit,
         )
     else:
-        df = safe_load_csv(
-            args.source, header_option=0 if with_header else None, limit=limit
+        df = safe_load_file(
+            args.source,
+            file_type,
+            header_option=0 if with_header else None,
+            limit=limit,
         )
 
     # Build schema type map for tag or edge type
@@ -217,7 +243,9 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
             else:
                 query = f"INSERT VERTEX `{args.tag}` (`{'`, `'.join(prop_columns)}`) VALUES "
             for index, row in batch.iterrows():
-                vid_str = f'{QUOTE_VID}{row["___vid"]}{QUOTE_VID}'
+                raw_vid_str = row["___vid"].strip('"').replace('"', '\\"')
+                vid_str = f"{QUOTE_VID}{raw_vid_str}{QUOTE_VID}"
+
                 prop_str = ""
                 if with_props:
                     for prop_name in prop_columns:
@@ -230,7 +258,8 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                                 )
                             prop_str += "NULL, "
                         elif prop_schema_map[prop_name]["type"] == "string":
-                            prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            raw_prop_str = prop_value.strip('"').replace('"', '\\"')
+                            prop_str += f"{QUOTE}{raw_prop_str}{QUOTE}, "
                         elif prop_schema_map[prop_name]["type"] == "date":
                             prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
                         elif prop_schema_map[prop_name]["type"] == "datetime":
@@ -275,8 +304,10 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                     f"INSERT EDGE `{args.edge}` (`{'`, `'.join(prop_columns)}`) VALUES "
                 )
             for index, row in batch.iterrows():
-                src_str = f'{QUOTE_VID}{row["___src"]}{QUOTE_VID}'
-                dst_str = f'{QUOTE_VID}{row["___dst"]}{QUOTE_VID}'
+                raw_src_str = row["___src"].strip('"').replace('"', '\\"')
+                src_str = f"{QUOTE_VID}{raw_src_str}{QUOTE_VID}"
+                raw_dst_str = row["___dst"].strip('"').replace('"', '\\"')
+                dst_str = f"{QUOTE_VID}{raw_dst_str}{QUOTE_VID}"
                 prop_str = ""
                 if with_props:
                     for prop_name in prop_columns:
@@ -289,7 +320,8 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                                 )
                             prop_str += "NULL, "
                         elif prop_schema_map[prop_name]["type"] == "string":
-                            prop_str += f"{QUOTE}{prop_value}{QUOTE}, "
+                            raw_prop_str = prop_value.strip('"').replace('"', '\\"')
+                            prop_str += f"{QUOTE}{raw_prop_str}{QUOTE}, "
                         elif prop_schema_map[prop_name]["type"] == "date":
                             prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
                         elif prop_schema_map[prop_name]["type"] == "datetime":
@@ -344,6 +376,7 @@ if __name__ == "__main__":
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/corp_share.csv --edge hold_share --src 0 --dst 1 --props 2:share  --space shareholding
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/person_corp_share.csv --edge hold_share --src 0 --dst 1 --props 2:share  --space shareholding
 %ng_load  --source https://github.com/wey-gu/awesome-graph-dataset/raw/main/datasets/shareholding/tiny/person_rel.csv --edge reletive_with --src 0 --dst 1 --props 2:degree  --space shareholding
+%ng_load --header --source https://github.com/microsoft/graphrag/raw/main/examples_notebooks/inputs/operation%20dulce/create_final_entities.parquet --tag entity --vid 1 --props 1:name --space ms_paper
 """
     execute_fn = conn_pool.get_session("root", "nebula").execute
     for line in test.split("\n"):

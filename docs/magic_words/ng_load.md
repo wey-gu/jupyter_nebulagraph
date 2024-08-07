@@ -1,6 +1,6 @@
-## Load Data from CSV
+## Load Data from CSV or Parquet file
 
-It's supported to load data from a CSV file into NebulaGraph with the help of `ng_load_csv` magic.
+It's supported to load data from a CSV or Parquet file into NebulaGraph with the help of `ng_load` magic.
 
 ### Examples
 
@@ -58,7 +58,7 @@ Some other examples:
 
 ### Usage
 
-```
+```python
 %ng_load --source <source> [--header] --space <space> [--tag <tag>] [--vid <vid>] [--edge <edge>] [--src <src>] [--dst <dst>] [--rank <rank>] [--props <props>] [-b <batch>] [--limit <limit>]
 ```
 
