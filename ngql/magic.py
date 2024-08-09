@@ -148,7 +148,7 @@ class IPythonNGQL(Magics, Configurable):
             fancy_print("[ERROR] Connection is not ready", color="pink")
             return f"Connection State: { connection_state }"
         if connection_state == CONNECTION_POOL_CREATED:
-            fancy_print("Connection Pool Created", color="blue")
+            fancy_print("[OK] Connection Pool Created", color="green")
             if not cell:
                 return self._stylized(self._show_spaces())
             else:
@@ -192,12 +192,16 @@ class IPythonNGQL(Magics, Configurable):
             except RuntimeError:
                 # When GraphD is over TLS
                 fancy_print(
-                    "[ERROR] Got RuntimeError, trying to connect assuming GraphD is over TLS",
+                    "[WARN] Got RuntimeError, trying to connect assuming NebulaGraph is over TLS",
                     color="pink",
                 )
                 ssl_config = SSL_config()
                 connect_init_result = connection_pool.init(
                     [(args.address, args.port)], config, ssl_config
+                )
+                fancy_print(
+                    f"[OK] Connection State: { connect_init_result }, TLS: True",
+                    color="blue",
                 )
             if not connect_init_result:
                 return CONNECTION_POOL_INIT_FAILURE

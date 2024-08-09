@@ -243,7 +243,15 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
             else:
                 query = f"INSERT VERTEX `{args.tag}` (`{'`, `'.join(prop_columns)}`) VALUES "
             for index, row in batch.iterrows():
-                raw_vid_str = row["___vid"].strip('"').replace('"', '\\"')
+                if pd.isna(row["___vid"]) or row["___vid"] == "":
+                    fancy_print(
+                        f"[WARNING] Skipping row with empty VID: {row}", "yellow"
+                    )
+                    continue
+                elif isinstance(row["___vid"], str):
+                    raw_vid_str = row["___vid"].strip('"').replace('"', '\\"')
+                else:
+                    raw_vid_str = str(row["___vid"])
                 vid_str = f"{QUOTE_VID}{raw_vid_str}{QUOTE_VID}"
 
                 prop_str = ""
@@ -304,9 +312,27 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                     f"INSERT EDGE `{args.edge}` (`{'`, `'.join(prop_columns)}`) VALUES "
                 )
             for index, row in batch.iterrows():
-                raw_src_str = row["___src"].strip('"').replace('"', '\\"')
+                if pd.isna(row["___src"]) or row["___src"] == "":
+                    fancy_print(
+                        f"[WARNING] Skipping row with empty source VID: {row}", "yellow"
+                    )
+                    continue
+                elif isinstance(row["___src"], str):
+                    raw_src_str = row["___src"].strip('"').replace('"', '\\"')
+                else:
+                    raw_src_str = str(row["___src"])
                 src_str = f"{QUOTE_VID}{raw_src_str}{QUOTE_VID}"
-                raw_dst_str = row["___dst"].strip('"').replace('"', '\\"')
+
+                if pd.isna(row["___dst"]) or row["___dst"] == "":
+                    fancy_print(
+                        f"[WARNING] Skipping row with empty destination VID: {row}",
+                        "yellow",
+                    )
+                    continue
+                elif isinstance(row["___dst"], str):
+                    raw_dst_str = row["___dst"].strip('"').replace('"', '\\"')
+                else:
+                    raw_dst_str = str(row["___dst"])
                 dst_str = f"{QUOTE_VID}{raw_dst_str}{QUOTE_VID}"
                 prop_str = ""
                 if with_props:
