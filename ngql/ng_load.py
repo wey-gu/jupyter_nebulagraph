@@ -266,7 +266,11 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                                 )
                             prop_str += "NULL, "
                         elif prop_schema_map[prop_name]["type"] == "string":
-                            raw_prop_str = prop_value.strip('"').replace('"', '\\"')
+                            raw_prop_str = (
+                                prop_value.strip('"')
+                                .replace('"', '\\"')
+                                .replace("\n", "\\n")
+                            )
                             prop_str += f"{QUOTE}{raw_prop_str}{QUOTE}, "
                         elif prop_schema_map[prop_name]["type"] == "date":
                             prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
@@ -346,7 +350,11 @@ def ng_load(execute_fn: Callable[[str], ResultSet], args: LoadDataArgsModel):
                                 )
                             prop_str += "NULL, "
                         elif prop_schema_map[prop_name]["type"] == "string":
-                            raw_prop_str = prop_value.strip('"').replace('"', '\\"')
+                            raw_prop_str = (
+                                prop_value.strip('"')
+                                .replace('"', '\\"')
+                                .replace("\n", "\\n")
+                            )
                             prop_str += f"{QUOTE}{raw_prop_str}{QUOTE}, "
                         elif prop_schema_map[prop_name]["type"] == "date":
                             prop_str += f"date({QUOTE}{prop_value}{QUOTE}), "
